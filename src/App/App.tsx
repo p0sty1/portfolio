@@ -5,7 +5,7 @@ import {
   Buttons,
   Content,
   Footer,
-  SupabaseDemo,
+  Guestbook,
   Toggle,
 } from 'components';
 
@@ -38,9 +38,15 @@ export const App = () => {
     <AppProvider config={config} isMobile={isMobile}>
       <main className="app">
         <Toggle />
-        <Content />
-        <Buttons />
-        <SupabaseDemo />
+        <div className="app-pages">
+          <section className="app-page app-page-hero">
+            <Content />
+            <Buttons />
+          </section>
+          <section className="app-page app-page-guestbook">
+            <Guestbook />
+          </section>
+        </div>
         <Footer />
         <Background />
       </main>
