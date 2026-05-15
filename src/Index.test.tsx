@@ -78,10 +78,10 @@ describe('application tests', () => {
     checkContent(element, /^Your Name$/, undefined, true);
   });
 
-  it('should render title: Software Engineer', () => {
+  it('should render title: Full Stack Developer', () => {
     const element = screen.getByTestId('title');
 
-    checkContent(element, /^Software Engineer$/, undefined, true);
+    checkContent(element, /^Full Stack Developer$/, undefined, true);
   });
 
   it('should render creator', () => {
@@ -100,14 +100,19 @@ describe('application tests', () => {
     const parent = screen.getByTestId('button-GitHub');
     const child = screen.getByTestId('GitHub');
 
-    checkButton(parent, child, /^GitHub$/, 'https://github.com/');
+    checkButton(parent, child, /^GitHub$/, 'https://github.com/p0sty1');
   });
 
   it('should render LinkedIn button', () => {
     const parent = screen.getByTestId('button-LinkedIn');
     const child = screen.getByTestId('LinkedIn');
 
-    checkButton(parent, child, /^LinkedIn$/, 'https://www.linkedin.com/');
+    checkButton(
+      parent,
+      child,
+      /^LinkedIn$/,
+      'https://www.linkedin.com/in/boyu-jiang-7a106b383/',
+    );
   });
 
   it('should render Resume button', () => {
@@ -121,7 +126,7 @@ describe('application tests', () => {
     const parent = screen.getByTestId('button-Email');
     const child = screen.getByTestId('Email');
 
-    checkButton(parent, child, /^Email$/, 'mailto:hello@example.com');
+    checkButton(parent, child, /^Email$/, 'mailto:jyangb1y@g.ucla.edu');
   });
 
   it('should toggle between the dark and light themes', () => {

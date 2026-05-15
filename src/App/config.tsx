@@ -6,7 +6,7 @@ export const config: Config = {
     display: 'Your Name',
   },
   title: {
-    display: 'Software Engineer',
+    display: 'Full Stack Developer',
   },
   buttons: [
     {
@@ -14,14 +14,14 @@ export const config: Config = {
       display: 'GitHub',
       ariaLabel: 'GitHub profile (opens in new window)',
       icon: <GitHub />,
-      href: 'https://github.com/',
+      href: 'https://github.com/p0sty1',
     },
     {
       name: 'linked-in',
       display: 'LinkedIn',
       ariaLabel: 'LinkedIn profile (opens in new window)',
       icon: <LinkedIn />,
-      href: 'https://www.linkedin.com/',
+      href: 'https://www.linkedin.com/in/boyu-jiang-7a106b383/',
     },
     {
       name: 'resume',
@@ -35,7 +35,7 @@ export const config: Config = {
       display: 'Email',
       ariaLabel: 'Email contact (opens in new window)',
       icon: <Email />,
-      href: 'mailto:hello@example.com',
+      href: 'mailto:jyangb1y@g.ucla.edu',
     },
   ],
 };
