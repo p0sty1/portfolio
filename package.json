@@ -14,7 +14,6 @@
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-tsparticles": "^1.43.1",
     "styled-components": "^6.1.18"
   },
   "devDependencies": {

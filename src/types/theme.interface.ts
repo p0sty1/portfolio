@@ -4,6 +4,8 @@ export interface Theme {
   secondaryTextColor: string;
   tertiaryTextColor: string;
   background: string;
+  gridColor: string;
+  spotlightColor: string;
   shadowColor: string;
 }
 

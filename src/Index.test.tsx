@@ -72,10 +72,10 @@ describe('application tests', () => {
     expect(parent).toHaveAttribute('href', link);
   };
 
-  it('should render name: Your Name', () => {
+  it('should render name: Boyu Jiang', () => {
     const element = screen.getByTestId('name');
 
-    checkContent(element, /^Your Name$/, undefined, true);
+    checkContent(element, /^Boyu Jiang$/, undefined, true);
   });
 
   it('should render title: Full Stack Developer', () => {
@@ -87,7 +87,7 @@ describe('application tests', () => {
   it('should render creator', () => {
     const element = screen.getByTestId('creator');
 
-    checkContent(element, /^Your Name$/, '#');
+    checkContent(element, /^Boyu Jiang$/, '#');
   });
 
   it('should render link to source code', () => {
@@ -131,31 +131,31 @@ describe('application tests', () => {
 
   it('should toggle between the dark and light themes', () => {
     const toggle = screen.getByTestId('toggle');
-    const particles = screen.getByTestId('particles');
+    const background = screen.getByTestId('background');
 
     expect(toggle).toBeVisible();
     expect(toggle).toHaveAccessibleName();
     expect(toggle).toHaveAccessibleDescription();
 
-    expect(particles).toBeVisible();
+    expect(background).toBeVisible();
 
     // site should default to the dark theme
     expect(toggle).toBeChecked();
-    expect(particles).toHaveStyle({ backgroundColor: '#000' });
+    expect(background).toHaveStyle({ backgroundColor: '#0a192f' });
 
     // click the toggle
     fireEvent.click(toggle);
 
     // the light theme should be visible
     expect(toggle).not.toBeChecked();
-    expect(particles).toHaveStyle({ backgroundColor: '#fff' });
+    expect(background).toHaveStyle({ backgroundColor: '#f8fafc' });
   });
 
   it('should render full footer on desktop', () => {
     const footer = screen.getByTestId('footer');
 
     expect(footer).toHaveTextContent(
-      /^Designed and built by Your Name \| Source$/,
+      /^Designed and built by Boyu Jiang \| Source$/,
     );
   });
 });
@@ -175,7 +175,7 @@ describe('app context tests', () => {
     // partial footer should now be visible
     const footer = screen.getByTestId('footer');
 
-    expect(footer).toHaveTextContent(/^Designed and built by Your Name$/);
+    expect(footer).toHaveTextContent(/^Designed and built by Boyu Jiang$/);
   });
 
   describe('reducer tests', () => {
@@ -209,10 +209,10 @@ describe('local storage tests', () => {
     act(() => {
       rerender(<App />);
     });
-    const particles = screen.getByTestId('particles');
+    const background = screen.getByTestId('background');
 
     expect(localStorage.getItem('theme')).toEqual('light');
-    expect(particles).toHaveStyle({ backgroundColor: '#fff' });
+    expect(background).toHaveStyle({ backgroundColor: '#f8fafc' });
   });
 
   it('should change local storage value when toggle is clicked', async () => {

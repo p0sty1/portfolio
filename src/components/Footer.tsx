@@ -43,7 +43,7 @@ export const Footer = () => {
           target="_blank"
           $theme={theme}
         >
-          {'Your Name'}
+          {'Boyu Jiang'}
         </F.Link>
         {!isMobile && (
           <>

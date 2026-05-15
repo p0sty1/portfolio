@@ -3,7 +3,7 @@ import { Config } from 'types';
 
 export const config: Config = {
   name: {
-    display: 'Your Name',
+    display: 'Boyu Jiang',
   },
   title: {
     display: 'Full Stack Developer',

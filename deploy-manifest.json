@@ -1,0 +1,18 @@
+{
+  "/asset-manifest.json": "58ab155d7a51219baf4149a242f7cb5b0d4dc6bda3ce2dfdb6d41e788991cb7f",
+  "/icons\\apple-touch-icon.png": "b458ca10a6af016714c115e7479daae5abc4a28c5bbcd59800d8cf823c1ae111",
+  "/icons\\favicon-16x16.png": "f6cf5fba33a1cbfaab5963acb9c4e1626df2517e73bfeef52e2e1c9240081d11",
+  "/icons\\favicon-32x32.png": "a3c3f24a1665cffc0ad705b35d48d7f3853764283f6a51a8f0ff1db6f77b1809",
+  "/icons\\favicon.ico": "8c106770b03a2b1680482ba75b8ac04df495fcde01cb241eb6569679fda634fd",
+  "/icons\\favicon.svg": "db8e9f581d2371c84c17c387fe06abcdd23a618aacd3ff7434e49e8b2b83578c",
+  "/icons\\icon-192x192.png": "2ce0e40265fdbc1b31e7f8c3b08198eedc13c207507ae316d4b061331cf6f3ce",
+  "/icons\\icon-512x512.png": "b159edb8181a5e0899e571f70cac865f2b488366d946fcb36c96dc8d84fdf9f8",
+  "/index.html": "a389c75dc0eddb3c59396ca27ae56ad62821c9a4d818a5440606dd1dd365f384",
+  "/manifest.webmanifest": "0e146c65d4e997e01637ccb9555566454c26463c2248eadd87616cd24fe40801",
+  "/robots.txt": "1cbdbc6504be7abe1267d01d7f565bfcfe5851ba3f6a3754d1d61c8f8a2c6aa3",
+  "/static\\css\\main.7f0d8e49.css": "f2920c22b40b6970e269550401909ee21b2030db3a5c98f0109683f5bac31e94",
+  "/static\\css\\main.7f0d8e49.css.map": "320b491dcd87e0d5750288f38df343fe73f4ea06e4834ba9e65d3a56a7cd3a16",
+  "/static\\js\\main.84c29d1d.js": "1e18f380e55d05b499efdaa014cb5232859d80b6a2cc462ad2049c4a7d70ea9b",
+  "/static\\js\\main.84c29d1d.js.LICENSE.txt": "fcd44eaa24992e4f238a50dc8ab77d8b2052e6c8006c8aef3187f764cf55406d",
+  "/static\\js\\main.84c29d1d.js.map": "6401424e8235c04a08e4532ec9339e334e3d1de6f1251ccdc7c616ba9a8bd18b"
+}
