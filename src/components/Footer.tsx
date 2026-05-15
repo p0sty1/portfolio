@@ -37,13 +37,13 @@ export const Footer = () => {
         {'Designed and built by '}
         <F.Link
           data-v2="creator"
-          aria-label="Adam Alston's personal website (opens in new window)"
-          href="https://www.adamalston.com/"
+          aria-label="Personal website (opens in new window)"
+          href="#"
           rel="noopener noreferrer"
           target="_blank"
           $theme={theme}
         >
-          {'Adam Alston'}
+          {'Your Name'}
         </F.Link>
         {!isMobile && (
           <>
@@ -51,7 +51,7 @@ export const Footer = () => {
             <F.Link
               data-v2="source"
               aria-label="Source code for this website (opens in new window)"
-              href="https://github.com/adamalston/v2/"
+              href="#"
               rel="noopener noreferrer"
               target="_blank"
               $theme={theme}

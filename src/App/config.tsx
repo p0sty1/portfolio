@@ -3,7 +3,7 @@ import { Config } from 'types';
 
 export const config: Config = {
   name: {
-    display: 'Adam Alston',
+    display: 'Your Name',
   },
   title: {
     display: 'Software Engineer',
@@ -14,28 +14,28 @@ export const config: Config = {
       display: 'GitHub',
       ariaLabel: 'GitHub profile (opens in new window)',
       icon: <GitHub />,
-      href: 'https://github.com/adamalston/',
+      href: 'https://github.com/',
     },
     {
       name: 'linked-in',
       display: 'LinkedIn',
       ariaLabel: 'LinkedIn profile (opens in new window)',
       icon: <LinkedIn />,
-      href: 'https://www.linkedin.com/in/adam-alston/',
+      href: 'https://www.linkedin.com/',
     },
     {
       name: 'resume',
       display: 'Resume',
-      ariaLabel: 'Resume in Google Drive (opens in new window)',
+      ariaLabel: 'Resume (opens in new window)',
       icon: <Resume />,
-      href: 'https://drive.google.com/file/d/1VQ_Oeim_e92QEMi64ejGWY5Hf4RRxfeJ/view',
+      href: '#',
     },
     {
       name: 'email',
       display: 'Email',
       ariaLabel: 'Email contact (opens in new window)',
       icon: <Email />,
-      href: 'mailto:aalston9@gmail.com',
+      href: 'mailto:hello@example.com',
     },
   ],
 };
