@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 
 import {
   Background,
-  Buttons,
   Content,
+  DoingSection,
   Footer,
   Guestbook,
+  ScrollHint,
   Toggle,
 } from 'components';
 
@@ -39,11 +40,22 @@ export const App = () => {
       <main className="app">
         <Toggle />
         <div className="app-pages">
-          <section className="app-page app-page-hero">
-            <Content />
-            <Buttons />
+          <section
+            id="home"
+            className="app-page app-page-home"
+            aria-label="Home"
+          >
+            <div className="app-hero-inner">
+              <Content />
+              <DoingSection />
+              <ScrollHint />
+            </div>
           </section>
-          <section className="app-page app-page-guestbook">
+          <section
+            id="guestbook"
+            className="app-page app-page-guestbook"
+            aria-label="Guestbook"
+          >
             <Guestbook />
           </section>
         </div>

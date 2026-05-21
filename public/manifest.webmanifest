@@ -3,8 +3,8 @@
   "short_name": "Boyu Jiang",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0a192f",
-  "theme_color": "#0a192f",
+  "background_color": "#0c0c0f",
+  "theme_color": "#0c0c0f",
   "icons": [
     {
       "src": "icons/favicon.ico",

@@ -14,13 +14,15 @@ const mockState = {
   config: {
     name: { display: 'Default Name' },
     title: { display: 'Default Title' },
-    buttons: [
+    bio: { display: 'Default bio text.' },
+    avatar: { initials: 'DN', alt: 'Default avatar', src: '' },
+    doingItems: [
       {
-        name: 'Default Button',
-        display: 'Default Display',
-        ariaLabel: 'Default Aria Label',
-        icon: <></>,
-        href: '#',
+        name: 'guestbook',
+        display: 'Guestbook',
+        description: 'Leave a note.',
+        icon: '✎',
+        href: '#guestbook',
       },
     ],
   },
@@ -34,12 +36,6 @@ describe('application tests', () => {
     await act(() => render(<App />));
   });
 
-  /**
-   * Check content element
-   * @param {HTMLElement} element Element for the content
-   * @param {RegExp} display Display value for the content
-   * @param {string} link Optional link within the content
-   */
   const checkContent = (
     element: HTMLElement,
     display: RegExp,
@@ -52,25 +48,13 @@ describe('application tests', () => {
     if (link) expect(element).toHaveAttribute('href', link);
   };
 
-  /**
-   * Check button element
-   * @param {HTMLElement} parent Parent element for the button
-   * @param {HTMLElement} child Child element for the button
-   * @param {RegExp} display Display value for the button
-   * @param {string} link Link within the button
-   */
-  const checkButton = (
-    parent: HTMLElement,
-    child: HTMLElement,
-    display: RegExp,
-    link: string,
-  ) => {
-    expect(child).toHaveTextContent(display);
+  it('should render avatar placeholder with initials', () => {
+    const avatar = screen.getByTestId('avatar');
 
-    expect(parent).toBeVisible();
-    expect(parent).toHaveAccessibleName();
-    expect(parent).toHaveAttribute('href', link);
-  };
+    expect(avatar).toBeVisible();
+    expect(avatar).toHaveAccessibleName(/Boyu Jiang profile photo/);
+    expect(avatar).toHaveTextContent(/^BJ$/);
+  });
 
   it('should render name: Boyu Jiang', () => {
     const element = screen.getByTestId('name');
@@ -82,6 +66,49 @@ describe('application tests', () => {
     const element = screen.getByTestId('title');
 
     checkContent(element, /^Full Stack Developer$/, undefined, true);
+  });
+
+  it('should render bio', () => {
+    const element = screen.getByTestId('bio');
+
+    expect(element).toBeVisible();
+    expect(element).toHaveTextContent(/Building thoughtful web experiences/);
+  });
+
+  it('should render What i am doing section', () => {
+    const section = screen.getByTestId('doing-section');
+
+    expect(section).toBeVisible();
+    expect(section).toHaveTextContent(/What i'm doing/);
+  });
+
+  it('should render scroll hint to guestbook', () => {
+    const hint = screen.getByTestId('scroll-hint');
+
+    expect(hint).toBeVisible();
+    expect(hint).toHaveTextContent(/下滑查看留言/);
+  });
+
+  it('should render guestbook as separate page section', () => {
+    const guestbookPage = document.getElementById('guestbook');
+
+    expect(guestbookPage).toBeInTheDocument();
+    expect(guestbookPage).toHaveClass('app-page-guestbook');
+    expect(screen.getByTestId('guestbook')).toHaveTextContent(/留言板/);
+  });
+
+  it('should render six doing cards', () => {
+    expect(screen.getByTestId('doing-guestbook')).toBeVisible();
+    expect(screen.getByTestId('doing-gallery')).toBeVisible();
+    expect(screen.getByTestId('doing-blog')).toBeVisible();
+    expect(screen.getByTestId('doing-likes')).toBeVisible();
+    expect(screen.getByTestId('doing-photos')).toBeVisible();
+    expect(screen.getByTestId('doing-funny')).toBeVisible();
+  });
+
+  it('should not render social resume row buttons', () => {
+    expect(screen.queryByTestId('button-GitHub')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('button-Resume')).not.toBeInTheDocument();
   });
 
   it('should render creator', () => {
@@ -96,39 +123,6 @@ describe('application tests', () => {
     checkContent(element, /^Source$/, '#');
   });
 
-  it('should render GitHub button', () => {
-    const parent = screen.getByTestId('button-GitHub');
-    const child = screen.getByTestId('GitHub');
-
-    checkButton(parent, child, /^GitHub$/, 'https://github.com/p0sty1');
-  });
-
-  it('should render LinkedIn button', () => {
-    const parent = screen.getByTestId('button-LinkedIn');
-    const child = screen.getByTestId('LinkedIn');
-
-    checkButton(
-      parent,
-      child,
-      /^LinkedIn$/,
-      'https://www.linkedin.com/in/boyu-jiang-7a106b383/',
-    );
-  });
-
-  it('should render Resume button', () => {
-    const parent = screen.getByTestId('button-Resume');
-    const child = screen.getByTestId('Resume');
-
-    checkButton(parent, child, /^Resume$/, '#');
-  });
-
-  it('should render Email button', () => {
-    const parent = screen.getByTestId('button-Email');
-    const child = screen.getByTestId('Email');
-
-    checkButton(parent, child, /^Email$/, 'mailto:jyangb1y@g.ucla.edu');
-  });
-
   it('should toggle between the dark and light themes', () => {
     const toggle = screen.getByTestId('toggle');
     const background = screen.getByTestId('background');
@@ -139,16 +133,13 @@ describe('application tests', () => {
 
     expect(background).toBeVisible();
 
-    // site should default to the dark theme
     expect(toggle).toBeChecked();
-    expect(background).toHaveStyle({ backgroundColor: '#0a192f' });
+    expect(background).toHaveStyle({ backgroundColor: '#0c0c0f' });
 
-    // click the toggle
     fireEvent.click(toggle);
 
-    // the light theme should be visible
     expect(toggle).not.toBeChecked();
-    expect(background).toHaveStyle({ backgroundColor: '#f8fafc' });
+    expect(background).toHaveStyle({ backgroundColor: '#f4f4f6' });
   });
 
   it('should render full footer on desktop', () => {
@@ -172,7 +163,6 @@ describe('app context tests', () => {
       ),
     );
 
-    // partial footer should now be visible
     const footer = screen.getByTestId('footer');
 
     expect(footer).toHaveTextContent(/^Designed and built by Boyu Jiang$/);
@@ -198,33 +188,28 @@ describe('local storage tests', () => {
     localStorage.clear();
   });
 
-  // https://testing-library.com/docs/react-testing-library/api/#rerender
   it('should persist the light theme through an app re-render', async () => {
     const { rerender } = await act(() => render(<App />));
 
     expect(localStorage.getItem('theme')).toBeNull();
     localStorage.setItem('theme', 'light');
 
-    // re-render the app and check the theme
     act(() => {
       rerender(<App />);
     });
     const background = screen.getByTestId('background');
 
     expect(localStorage.getItem('theme')).toEqual('light');
-    expect(background).toHaveStyle({ backgroundColor: '#f8fafc' });
+    expect(background).toHaveStyle({ backgroundColor: '#f4f4f6' });
   });
 
   it('should change local storage value when toggle is clicked', async () => {
-    // set local storage item and render the app
     localStorage.setItem('theme', 'light');
     await act(() => render(<App />));
 
-    // click the toggle
     const toggle = screen.getByTestId('toggle');
     fireEvent.click(toggle);
 
-    // check that the local storage item has been changed
     expect(localStorage.getItem('theme')).toEqual('dark');
   });
 });

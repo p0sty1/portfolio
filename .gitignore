@@ -47,3 +47,6 @@ deploy-manifest.json
 
 # Netlify configuration file
 .netlify
+
+# Wrangler local state
+.wrangler/
