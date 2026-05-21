@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 export interface Content {
   display: string;
 }
@@ -14,9 +16,20 @@ export interface DoingItem {
   name: string;
   display: string;
   description: string;
-  icon: string;
-  /** `#guestbook` scrolls to guestbook page; other hashes are placeholders */
+  icon: JSX.Element;
+  /** iOS-style app icon background gradient */
+  iconGradient: string;
+  /** `#gallery` / `#guestbook` switch view; other hashes are placeholders */
   href: string;
+}
+
+export interface ContactItem {
+  name: string;
+  display: string;
+  ariaLabel: string;
+  iconGradient: string;
+  href: string;
+  icon: JSX.Element;
 }
 
 export interface Config {
@@ -25,4 +38,5 @@ export interface Config {
   bio: Content;
   avatar: Avatar;
   doingItems: DoingItem[];
+  dockItems: ContactItem[];
 }

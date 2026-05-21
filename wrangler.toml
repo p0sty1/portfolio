@@ -1,7 +1,15 @@
 # Must match your existing Cloudflare Worker name (Dashboard → Workers & Pages).
 name = "portfolio"
+account_id = "cd77340c35e904beb65ed7a2dea6d21c"
+main = "worker/index.ts"
 compatibility_date = "2026-05-16"
 
 [assets]
 directory = "./build"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
+
+[[r2_buckets]]
+binding = "GALLERY"
+bucket_name = "portfolio-gallery"
+preview_bucket_name = "portfolio-gallery"

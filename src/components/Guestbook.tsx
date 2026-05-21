@@ -14,11 +14,6 @@ interface GuestbookRow {
 
 const TABLE = 'portfolio_demo_notes';
 
-const scrollToHome = () => {
-  document
-    .getElementById('home')
-    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-};
 
 const Page = styled.div`
   position: relative;
@@ -173,7 +168,7 @@ const formatTime = (iso: string) => {
 };
 
 export const Guestbook = () => {
-  const { theme } = useContext(AppContext);
+  const { theme, setActiveView } = useContext(AppContext);
   const client = getSupabase();
 
   const [rows, setRows] = useState<GuestbookRow[]>([]);
@@ -243,7 +238,9 @@ export const Guestbook = () => {
             type="button"
             $theme={theme}
             aria-label="返回首页"
-            onClick={scrollToHome}
+            onClick={() => {
+              setActiveView('home');
+            }}
           >
             ← 首页
           </BackButton>
@@ -263,7 +260,9 @@ export const Guestbook = () => {
           type="button"
           $theme={theme}
           aria-label="返回首页"
-          onClick={scrollToHome}
+          onClick={() => {
+            setActiveView('home');
+          }}
         >
           ← 首页
         </BackButton>

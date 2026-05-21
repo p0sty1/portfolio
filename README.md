@@ -20,3 +20,24 @@ npm start
 ```bash
 npm run build
 ```
+
+## 画廊 · Cloudflare R2
+
+部署到 Workers 后，画廊从 R2 桶 `portfolio-gallery` 读取 `gallery/manifest.json`，图片通过 `/api/gallery/media/<key>` 访问。
+
+首次配置（需先 `npx wrangler login`）：
+
+```powershell
+.\scripts\r2-gallery-setup.ps1
+# 或
+npm run r2:init
+npm run r2:upload-manifest
+```
+
+上传单张图片示例：
+
+```bash
+npx wrangler r2 object put portfolio-gallery/gallery/g1.jpg --file=./photos/g1.jpg --content-type=image/jpeg
+```
+
+本地带 Worker 预览：`npm run dev:worker`（需先 build）。

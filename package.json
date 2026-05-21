@@ -9,7 +9,10 @@
     "eject": "react-scripts eject",
     "lint": "eslint --cache --fix --max-warnings 0 ./src/",
     "format": "prettier --cache --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "r2:init": "wrangler r2 bucket create portfolio-gallery",
+    "r2:upload-manifest": "wrangler r2 object put portfolio-gallery/gallery/manifest.json --file=r2/gallery/manifest.json --content-type=application/json",
+    "dev:worker": "npm run build && wrangler dev"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",

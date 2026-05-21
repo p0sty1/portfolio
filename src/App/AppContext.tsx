@@ -1,7 +1,13 @@
-import { createContext, Dispatch, ReactNode, useReducer } from 'react';
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useState,
+} from 'react';
 
 import { themes } from 'appearance';
-import { Config, Theme } from 'types';
+import { AppView, Config, Theme } from 'types';
 
 interface AppProviderInterface {
   config: Config;
@@ -10,57 +16,31 @@ interface AppProviderInterface {
 
 interface AppContextInterface extends AppProviderInterface {
   theme: Theme;
-  setTheme: Dispatch<string>;
+  activeView: AppView;
+  setActiveView: Dispatch<SetStateAction<AppView>>;
 }
 
-const actions = { SET_THEME: 'SET_THEME' } as const;
-
-interface AppAction {
-  type: typeof actions.SET_THEME;
-  value: string;
-}
-
-type AppState = AppContextInterface;
-
-const initialState: AppState = {
+export const AppContext = createContext<AppContextInterface>({
   config: {} as Config,
   isMobile: false,
   theme: themes.dark,
-  setTheme: () => undefined,
-};
-
-export const reducer = (state: AppState, action: AppAction): AppState => {
-  switch (action.type) {
-    case actions.SET_THEME:
-      return { ...state, theme: themes[action.value] };
-  }
-};
-
-export const AppContext = createContext(initialState);
+  activeView: 'home',
+  setActiveView: () => undefined,
+});
 
 export const AppProvider = ({
   config,
   isMobile,
   children,
 }: AppProviderInterface & { children: ReactNode }) => {
-  initialState.config = config;
-  initialState.isMobile = isMobile;
-
-  const supportedThemes = Object.keys(themes);
-  const localStorageTheme = localStorage.getItem('theme');
-  if (localStorageTheme && supportedThemes.includes(localStorageTheme)) {
-    initialState.theme = themes[localStorageTheme];
-  }
-
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [activeView, setActiveView] = useState<AppView>('home');
 
   const value: AppContextInterface = {
-    config: state.config,
-    isMobile: state.isMobile,
-    theme: state.theme,
-    setTheme: (value) => {
-      dispatch({ type: actions.SET_THEME, value });
-    },
+    config,
+    isMobile,
+    theme: themes.dark,
+    activeView,
+    setActiveView,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

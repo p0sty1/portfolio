@@ -1,12 +1,19 @@
 import { act } from 'react';
 
-import { configure, fireEvent, render, screen } from '@testing-library/react';
+import {
+  configure,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 
 import '__mocks__/matchMedia';
 import { App } from 'App/App';
-import { AppProvider, reducer } from 'App/AppContext';
+import { AppProvider } from 'App/AppContext';
 import { themes } from 'appearance';
 import { Footer } from 'components';
+import { DailyIcon } from 'icons/apps';
 
 configure({ testIdAttribute: 'data-v2' });
 
@@ -18,17 +25,20 @@ const mockState = {
     avatar: { initials: 'DN', alt: 'Default avatar', src: '' },
     doingItems: [
       {
-        name: 'guestbook',
-        display: 'Guestbook',
-        description: 'Leave a note.',
-        icon: '✎',
-        href: '#guestbook',
+        name: 'daily',
+        display: '日常',
+        description: 'Daily notes.',
+        icon: <DailyIcon />,
+        iconGradient: 'linear-gradient(145deg, #ff9f0a, #ff6b35)',
+        href: '#daily',
       },
     ],
+    dockItems: [],
   },
   isMobile: false,
   theme: themes.dark,
-  setTheme: () => undefined,
+  activeView: 'home' as const,
+  setActiveView: () => undefined,
 };
 
 describe('application tests', () => {
@@ -75,74 +85,99 @@ describe('application tests', () => {
     expect(element).toHaveTextContent(/Building thoughtful web experiences/);
   });
 
-  it('should render What i am doing section', () => {
-    const section = screen.getByTestId('doing-section');
-
-    expect(section).toBeVisible();
-    expect(section).toHaveTextContent(/What i'm doing/);
+  it('should render profile widget and app grid', () => {
+    expect(screen.getByTestId('profile-widget')).toBeVisible();
+    expect(screen.getByTestId('doing-section')).toBeVisible();
+    expect(screen.getByTestId('home-screen')).toBeVisible();
   });
 
-  it('should render scroll hint to guestbook', () => {
-    const hint = screen.getByTestId('scroll-hint');
-
-    expect(hint).toBeVisible();
-    expect(hint).toHaveTextContent(/下滑查看留言/);
+  it('should render contact dock with four apps', () => {
+    expect(screen.getByTestId('contact-dock')).toBeVisible();
+    expect(screen.getByTestId('dock-github')).toBeVisible();
+    expect(screen.getByTestId('dock-linkedin')).toBeVisible();
+    expect(screen.getByTestId('dock-resume')).toBeVisible();
+    expect(screen.getByTestId('dock-email')).toBeVisible();
   });
 
-  it('should render guestbook as separate page section', () => {
-    const guestbookPage = document.getElementById('guestbook');
-
-    expect(guestbookPage).toBeInTheDocument();
-    expect(guestbookPage).toHaveClass('app-page-guestbook');
-    expect(screen.getByTestId('guestbook')).toHaveTextContent(/留言板/);
-  });
-
-  it('should render six doing cards', () => {
+  it('should render guestbook app in the grid', () => {
     expect(screen.getByTestId('doing-guestbook')).toBeVisible();
+    expect(screen.getByTestId('doing-guestbook')).toHaveTextContent(/留言/);
+  });
+
+  it('should switch to guestbook on card click', () => {
+    expect(screen.queryByTestId('guestbook')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('doing-guestbook'));
+    expect(screen.getByTestId('guestbook')).toBeVisible();
+    expect(screen.queryByTestId('doing-section')).not.toBeInTheDocument();
+  });
+
+  it('should return home from guestbook back button', () => {
+    fireEvent.click(screen.getByTestId('doing-guestbook'));
+    fireEvent.click(screen.getByLabelText('返回首页'));
+    expect(screen.getByTestId('doing-section')).toBeVisible();
+    expect(screen.queryByTestId('guestbook')).not.toBeInTheDocument();
+  });
+
+  it('should switch to gallery on card click', async () => {
+    expect(screen.queryByTestId('gallery')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('doing-gallery'));
+    expect(screen.getByTestId('gallery')).toBeVisible();
+    await waitFor(() => {
+      expect(screen.getByTestId('gallery-card-g1')).toBeVisible();
+    });
+    expect(screen.queryByTestId('doing-section')).not.toBeInTheDocument();
+  });
+
+  it('should return home from gallery back button', () => {
+    fireEvent.click(screen.getByTestId('doing-gallery'));
+    fireEvent.click(screen.getByLabelText('返回首页'));
+    expect(screen.getByTestId('doing-section')).toBeVisible();
+    expect(screen.queryByTestId('gallery')).not.toBeInTheDocument();
+  });
+
+  it('should render seven doing cards', () => {
+    expect(screen.getByTestId('doing-daily')).toBeVisible();
     expect(screen.getByTestId('doing-gallery')).toBeVisible();
     expect(screen.getByTestId('doing-blog')).toBeVisible();
     expect(screen.getByTestId('doing-likes')).toBeVisible();
     expect(screen.getByTestId('doing-photos')).toBeVisible();
     expect(screen.getByTestId('doing-funny')).toBeVisible();
+    expect(screen.getByTestId('doing-guestbook')).toBeVisible();
   });
 
-  it('should not render social resume row buttons', () => {
+  it('should not render legacy social button row', () => {
     expect(screen.queryByTestId('button-GitHub')).not.toBeInTheDocument();
     expect(screen.queryByTestId('button-Resume')).not.toBeInTheDocument();
   });
 
-  it('should render creator', () => {
+  it('should render creator in guestbook footer', () => {
+    fireEvent.click(screen.getByTestId('doing-guestbook'));
     const element = screen.getByTestId('creator');
 
     checkContent(element, /^Boyu Jiang$/, '#');
   });
 
-  it('should render link to source code', () => {
+  it('should render link to source code in guestbook footer', () => {
+    fireEvent.click(screen.getByTestId('doing-guestbook'));
     const element = screen.getByTestId('source');
 
     checkContent(element, /^Source$/, '#');
   });
 
-  it('should toggle between the dark and light themes', () => {
-    const toggle = screen.getByTestId('toggle');
-    const background = screen.getByTestId('background');
-
-    expect(toggle).toBeVisible();
-    expect(toggle).toHaveAccessibleName();
-    expect(toggle).toHaveAccessibleDescription();
-
-    expect(background).toBeVisible();
-
-    expect(toggle).toBeChecked();
-    expect(background).toHaveStyle({ backgroundColor: '#0c0c0f' });
-
-    fireEvent.click(toggle);
-
-    expect(toggle).not.toBeChecked();
-    expect(background).toHaveStyle({ backgroundColor: '#f4f4f6' });
+  it('should not render theme toggle', () => {
+    expect(screen.queryByTestId('toggle')).not.toBeInTheDocument();
   });
 
-  it('should render full footer on desktop', () => {
+  it('should use dark background', () => {
+    expect(screen.getByTestId('background')).toHaveStyle({
+      backgroundColor: '#0c0c0f',
+    });
+  });
+
+  it('should render full footer on guestbook view', () => {
+    fireEvent.click(screen.getByTestId('doing-guestbook'));
     const footer = screen.getByTestId('footer');
 
     expect(footer).toHaveTextContent(
@@ -166,50 +201,5 @@ describe('app context tests', () => {
     const footer = screen.getByTestId('footer');
 
     expect(footer).toHaveTextContent(/^Designed and built by Boyu Jiang$/);
-  });
-
-  describe('reducer tests', () => {
-    it('should return the dark theme', () => {
-      const state = reducer(mockState, { type: 'SET_THEME', value: 'dark' });
-
-      expect(state).toEqual({ ...mockState, theme: themes.dark });
-    });
-
-    it('should return the light theme', () => {
-      const state = reducer(mockState, { type: 'SET_THEME', value: 'light' });
-
-      expect(state).toEqual({ ...mockState, theme: themes.light });
-    });
-  });
-});
-
-describe('local storage tests', () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
-  it('should persist the light theme through an app re-render', async () => {
-    const { rerender } = await act(() => render(<App />));
-
-    expect(localStorage.getItem('theme')).toBeNull();
-    localStorage.setItem('theme', 'light');
-
-    act(() => {
-      rerender(<App />);
-    });
-    const background = screen.getByTestId('background');
-
-    expect(localStorage.getItem('theme')).toEqual('light');
-    expect(background).toHaveStyle({ backgroundColor: '#f4f4f6' });
-  });
-
-  it('should change local storage value when toggle is clicked', async () => {
-    localStorage.setItem('theme', 'light');
-    await act(() => render(<App />));
-
-    const toggle = screen.getByTestId('toggle');
-    fireEvent.click(toggle);
-
-    expect(localStorage.getItem('theme')).toEqual('dark');
   });
 });

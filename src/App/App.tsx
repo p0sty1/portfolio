@@ -1,25 +1,60 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 
 import {
   Background,
-  Content,
-  DoingSection,
   Footer,
+  Gallery,
   Guestbook,
-  ScrollHint,
-  Toggle,
+  HomeScreen,
 } from 'components';
 
 import './App.scss';
-import { AppProvider } from './AppContext';
+import { AppContext, AppProvider } from './AppContext';
 import { config } from './config';
+
+const AppViews = () => {
+  const { activeView } = useContext(AppContext);
+
+  if (activeView === 'gallery') {
+    return (
+      <div className="app-viewport">
+        <div className="app-view app-view-gallery" aria-label="Gallery">
+          <Gallery />
+        </div>
+      </div>
+    );
+  }
+
+  if (activeView === 'guestbook') {
+    return (
+      <div className="app-viewport">
+        <div className="app-view app-view-guestbook" aria-label="Guestbook">
+          <Guestbook />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-viewport">
+      <section
+        id="home"
+        className="app-page app-page-home"
+        aria-label="Home"
+      >
+        <HomeScreen />
+      </section>
+    </div>
+  );
+};
 
 export const App = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const mediaQuery =
-      '(max-device-width: 820px) and (-webkit-min-device-pixel-ratio: 2)';
+    /** ≤768px: iPhone layout · wider: iPad / desktop web */
+    const mediaQuery = '(max-width: 768px)';
     const mediaQueryList = window.matchMedia(mediaQuery);
 
     const updateIsMobile = () => {
@@ -38,28 +73,7 @@ export const App = () => {
   return (
     <AppProvider config={config} isMobile={isMobile}>
       <main className="app">
-        <Toggle />
-        <div className="app-pages">
-          <section
-            id="home"
-            className="app-page app-page-home"
-            aria-label="Home"
-          >
-            <div className="app-hero-inner">
-              <Content />
-              <DoingSection />
-              <ScrollHint />
-            </div>
-          </section>
-          <section
-            id="guestbook"
-            className="app-page app-page-guestbook"
-            aria-label="Guestbook"
-          >
-            <Guestbook />
-          </section>
-        </div>
-        <Footer />
+        <AppViews />
         <Background />
       </main>
     </AppProvider>
