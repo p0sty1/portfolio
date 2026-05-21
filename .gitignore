@@ -47,3 +47,9 @@ deploy-manifest.json
 
 # Netlify configuration file
 .netlify
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
