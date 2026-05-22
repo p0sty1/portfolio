@@ -11,7 +11,8 @@
     "format": "prettier --cache --write .",
     "prepare": "husky",
     "r2:init": "wrangler r2 bucket create portfolio-gallery",
-    "r2:upload-manifest": "wrangler r2 object put portfolio-gallery/gallery/manifest.json --file=r2/gallery/manifest.json --content-type=application/json",
+    "r2:upload-manifest": "npx wrangler r2 object put portfolio-gallery/gallery/manifest.json --file=r2/gallery/manifest.json --content-type=application/json --remote",
+    "r2:upload-gallery": "powershell -ExecutionPolicy Bypass -File ./scripts/upload-gallery-from-folder.ps1",
     "dev:worker": "npm run build && wrangler dev"
   },
   "dependencies": {

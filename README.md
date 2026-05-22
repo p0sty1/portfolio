@@ -40,6 +40,14 @@ npm run r2:upload-manifest
 npx wrangler r2 object put portfolio-gallery/gallery/g1.jpg --file=./photos/g1.jpg --content-type=image/jpeg
 ```
 
+批量上传本地文件夹（如 `E:\gallery`）并更新 manifest：
+
+```powershell
+.\scripts\upload-gallery-from-folder.ps1 -SourceDir "E:\gallery"
+```
+
+然后打开站点 → **画廊** 查看（需 Worker 部署环境；`npm start` 仅用本地 `galleryItems` 回退）。
+
 本地带 Worker 预览：`npm run dev:worker`（需先 build）。
 
 ## 自定义域名 · Worker（非 Pages 静态）
@@ -58,3 +66,14 @@ Pages 上若还有 `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_URL`，请补进 `.en
 在 Pages 控制台 **Custom domains** 中移除 `jyangb1y.site`，避免与 Worker 路由冲突。
 
 **注意：** 从 Pages 删除自定义域名时，Cloudflare 可能一并删除 DNS 记录，导致 `ERR_CONNECTION_CLOSED`。修复：执行 `npx wrangler deploy --domains jyangb1y.site`（`wrangler.toml` 中需有 `custom_domain = true` 路由）。
+
+### `workers.dev` 能开、`jyangb1y.site` 不能开
+
+多半是 **本机 DNS 解析不到**（校园网 DNS 常见）。诊断：
+
+```powershell
+.\scripts\check-domain-dns.ps1
+```
+
+若只有 `1.1.1.1` / `8.8.8.8` 能解析出 IP，请把 Windows 网卡 DNS 改为 `1.1.1.1` 和 `8.8.8.8`，再执行 `ipconfig /flushdns`，无痕刷新浏览器。  
+Cloudflare 控制台 → **jyangb1y.site** → **DNS** 中应能看到指向 Cloudflare 的 **A** 记录（如 `104.21.85.25`）。

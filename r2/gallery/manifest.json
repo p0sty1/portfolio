@@ -1,76 +1,85 @@
-{
+﻿{
   "items": [
     {
       "id": "g1",
-      "title": "粒子背景 · 暗色主题",
-      "caption": "Canvas 流体粒子与主题切换",
-      "tags": ["项目", "动效"],
-      "aspectRatio": "4/3",
+      "title": "随拍 1",
+      "caption": "个人画廊",
+      "tags": ["摄影", "生活"],
+      "aspectRatio": "3/4",
       "imageKey": "gallery/g1.jpg",
-      "likes": 128
+      "likes": 0
     },
     {
       "id": "g2",
-      "title": "首页玻璃卡片",
-      "caption": "Apple 风格毛玻璃导航",
-      "tags": ["UI", "项目"],
+      "title": "随拍 2",
+      "caption": "个人画廊",
+      "tags": ["摄影", "生活"],
       "aspectRatio": "3/4",
       "imageKey": "gallery/g2.jpg",
-      "likes": 86
+      "likes": 0
     },
     {
       "id": "g3",
-      "title": "配色稿 · 金棕强调",
-      "caption": "Portfolio 深色主题探索",
-      "tags": ["UI"],
-      "aspectRatio": "1/1",
+      "title": "随拍 3",
+      "caption": "个人画廊",
+      "tags": ["摄影", "生活"],
+      "aspectRatio": "3/4",
       "imageKey": "gallery/g3.jpg",
-      "likes": 42
+      "likes": 0
     },
     {
       "id": "g4",
-      "title": "留言板界面",
-      "caption": "独立全屏 + Supabase",
-      "tags": ["项目"],
+      "title": "随拍 4",
+      "caption": "个人画廊",
+      "tags": ["摄影", "生活"],
       "aspectRatio": "3/4",
       "imageKey": "gallery/g4.jpg",
-      "likes": 57
+      "likes": 0
     },
     {
       "id": "g5",
-      "title": "东京 · 街拍草稿",
-      "caption": "上传至 R2：gallery/g5.jpg",
+      "title": "随拍 5",
+      "caption": "个人画廊",
       "tags": ["摄影", "生活"],
-      "aspectRatio": "4/3",
+      "aspectRatio": "3/4",
       "imageKey": "gallery/g5.jpg",
-      "likes": 203
+      "likes": 0
     },
     {
       "id": "g6",
-      "title": "组件库快照",
-      "caption": "按钮与卡片状态",
-      "tags": ["UI", "项目"],
-      "aspectRatio": "1/1",
+      "title": "随拍 6",
+      "caption": "个人画廊",
+      "tags": ["摄影", "生活"],
+      "aspectRatio": "3/4",
       "imageKey": "gallery/g6.jpg",
-      "likes": 31
+      "likes": 0
     },
     {
       "id": "g7",
-      "title": "海边日落",
-      "caption": "竖构图",
+      "title": "随拍 7",
+      "caption": "个人画廊",
       "tags": ["摄影", "生活"],
-      "aspectRatio": "3/4",
+      "aspectRatio": "4/3",
       "imageKey": "gallery/g7.jpg",
-      "likes": 512
+      "likes": 0
     },
     {
       "id": "g8",
-      "title": "工作台一角",
-      "caption": "开发环境记录",
-      "tags": ["生活"],
-      "aspectRatio": "4/3",
+      "title": "随拍 8",
+      "caption": "个人画廊",
+      "tags": ["摄影", "生活"],
+      "aspectRatio": "3/4",
       "imageKey": "gallery/g8.jpg",
-      "likes": 19
+      "likes": 0
+    },
+    {
+      "id": "g9",
+      "title": "随拍 9",
+      "caption": "个人画廊",
+      "tags": ["摄影", "生活"],
+      "aspectRatio": "3/4",
+      "imageKey": "gallery/g9.jpg",
+      "likes": 0
     }
   ]
 }

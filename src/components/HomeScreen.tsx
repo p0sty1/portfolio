@@ -14,15 +14,17 @@ const Screen = styled.div`
   z-index: 2;
   display: flex;
   flex-direction: column;
-  width: 100%;
+  width: min(100%, var(--screen-max, 24.375rem));
   max-width: var(--screen-max, 24.375rem);
   height: 100%;
   min-height: 0;
-  margin: 0 auto;
+  min-width: 0;
+  margin-inline: auto;
   padding: 0 var(--screen-pad-x, 1.375rem);
   padding-bottom: var(--dock-bottom, 0.75rem);
   box-sizing: border-box;
-  overflow: visible;
+  overflow-x: hidden;
+  overflow-y: visible;
   font-family:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
     system-ui, sans-serif;
