@@ -56,3 +56,5 @@ npx wrangler deploy
 Pages 上若还有 `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_URL`，请补进 `.env` 再跑上述脚本，或手动：`npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY`。
 
 在 Pages 控制台 **Custom domains** 中移除 `jyangb1y.site`，避免与 Worker 路由冲突。
+
+**注意：** 从 Pages 删除自定义域名时，Cloudflare 可能一并删除 DNS 记录，导致 `ERR_CONNECTION_CLOSED`。修复：执行 `npx wrangler deploy --domains jyangb1y.site`（`wrangler.toml` 中需有 `custom_domain = true` 路由）。

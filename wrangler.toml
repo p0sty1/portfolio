@@ -5,11 +5,10 @@ main = "worker/index.ts"
 compatibility_date = "2026-05-16"
 workers_dev = true
 
-# Custom domain (zone must be on this Cloudflare account).
-# Remove jyangb1y.site from the Pages project to avoid route conflicts.
+# Custom domain: creates/updates DNS when you deploy with --domains jyangb1y.site
+# Do not also attach jyangb1y.site on a Pages project (conflicts + can delete DNS).
 routes = [
-  { pattern = "jyangb1y.site/*", zone_name = "jyangb1y.site" },
-  { pattern = "www.jyangb1y.site/*", zone_name = "jyangb1y.site" },
+  { pattern = "jyangb1y.site", custom_domain = true },
 ]
 
 [assets]
