@@ -3,6 +3,14 @@ name = "portfolio"
 account_id = "cd77340c35e904beb65ed7a2dea6d21c"
 main = "worker/index.ts"
 compatibility_date = "2026-05-16"
+workers_dev = true
+
+# Custom domain (zone must be on this Cloudflare account).
+# Remove jyangb1y.site from the Pages project to avoid route conflicts.
+routes = [
+  { pattern = "jyangb1y.site/*", zone_name = "jyangb1y.site" },
+  { pattern = "www.jyangb1y.site/*", zone_name = "jyangb1y.site" },
+]
 
 [assets]
 directory = "./build"

@@ -41,3 +41,18 @@ npx wrangler r2 object put portfolio-gallery/gallery/g1.jpg --file=./photos/g1.j
 ```
 
 本地带 Worker 预览：`npm run dev:worker`（需先 build）。
+
+## 自定义域名 · Worker（非 Pages 静态）
+
+生产域名 `jyangb1y.site` 应绑在 **Worker `portfolio`**（`wrangler.toml` 的 `routes`），不要绑在 Pages 项目，否则 `/api/gallery/*` 会退回 HTML，R2 头像无法显示。
+
+从 Pages 迁到 Worker 后，在本地执行（需 `npx wrangler login`）：
+
+```powershell
+.\scripts\sync-worker-secrets.ps1   # 把 .env 里的 Supabase 变量写入 Worker secrets
+npx wrangler deploy
+```
+
+Pages 上若还有 `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_URL`，请补进 `.env` 再跑上述脚本，或手动：`npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY`。
+
+在 Pages 控制台 **Custom domains** 中移除 `jyangb1y.site`，避免与 Worker 路由冲突。
