@@ -58,12 +58,15 @@ describe('application tests', () => {
     if (link) expect(element).toHaveAttribute('href', link);
   };
 
-  it('should render avatar placeholder with initials', () => {
+  it('should render avatar image from R2', () => {
     const avatar = screen.getByTestId('avatar');
 
     expect(avatar).toBeVisible();
     expect(avatar).toHaveAccessibleName(/Boyu Jiang profile photo/);
-    expect(avatar).toHaveTextContent(/^BJ$/);
+    const img = avatar.querySelector('img');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', '/api/gallery/media/avatar/profile.jpg');
+    expect(img).toHaveAttribute('alt', 'Boyu Jiang profile photo');
   });
 
   it('should render name: Boyu Jiang', () => {

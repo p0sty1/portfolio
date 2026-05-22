@@ -25,7 +25,7 @@ export const config: Config = {
   avatar: {
     initials: 'BJ',
     alt: 'Boyu Jiang profile photo',
-    src: '',
+    src: '/api/gallery/media/avatar/profile.jpg',
   },
   doingItems: [
     {
