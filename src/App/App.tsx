@@ -6,6 +6,7 @@ import {
   Gallery,
   Guestbook,
   HomeScreen,
+  Likes,
 } from 'components';
 
 import './App.scss';
@@ -36,13 +37,19 @@ const AppViews = () => {
     );
   }
 
+  if (activeView === 'likes') {
+    return (
+      <div className="app-viewport">
+        <div className="app-view app-view-likes" aria-label="Likes">
+          <Likes />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-viewport">
-      <section
-        id="home"
-        className="app-page app-page-home"
-        aria-label="Home"
-      >
+      <section id="home" className="app-page app-page-home" aria-label="Home">
         <HomeScreen />
       </section>
     </div>

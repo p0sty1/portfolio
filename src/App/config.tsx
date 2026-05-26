@@ -55,7 +55,7 @@ export const config: Config = {
     {
       name: 'likes',
       display: '喜欢',
-      description: 'Books, music, and tools.',
+      description: '电影、动漫、游戏与更多收藏。',
       icon: <LikesIcon />,
       iconGradient: C.purple,
       href: '#likes',

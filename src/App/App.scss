@@ -104,6 +104,19 @@ body {
   padding-bottom: 1.5rem;
 }
 
+.app-view-likes {
+  justify-content: flex-start;
+  align-items: stretch;
+  padding-top: 2rem;
+  padding-bottom: 1.5rem;
+}
+
+.app-view-likes > * {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
 .app-view-guestbook > *:first-child {
   flex: 1;
   min-height: 0;

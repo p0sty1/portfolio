@@ -1,1 +1,1 @@
-export type AppView = 'gallery' | 'guestbook' | 'home';
+export type AppView = 'gallery' | 'guestbook' | 'home' | 'likes';

@@ -7,4 +7,5 @@ export * from './Footer';
 export * from './Gallery';
 export * from './Guestbook';
 export * from './HomeScreen';
+export * from './Likes';
 export * from './ProfileWidget';

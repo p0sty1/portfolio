@@ -4,6 +4,7 @@ import { AppView } from 'types';
 export const viewFromHref = (href: string): AppView | null => {
   if (href === '#gallery') return 'gallery';
   if (href === '#guestbook') return 'guestbook';
+  if (href === '#likes') return 'likes';
 
   return null;
 };
