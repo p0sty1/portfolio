@@ -18,6 +18,11 @@ const Page = styled.div`
   width: 100%;
   max-width: 56rem;
   margin: 0 auto;
+  box-sizing: border-box;
+
+  @media (width >= 769px) {
+    padding: 2rem clamp(1.25rem, 4vw, 2rem) 1.5rem;
+  }
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -26,36 +31,8 @@ const Page = styled.div`
 `;
 
 const TopBar = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
   margin-bottom: 1.25rem;
   flex-shrink: 0;
-`;
-
-const BackButton = styled.button<{ $theme: Theme }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.5rem 0.9rem;
-  border: 1px solid ${({ $theme }) => $theme.glassBorder};
-  border-radius: 999px;
-  background: ${({ $theme }) => $theme.glassBackground};
-  color: ${({ $theme }) => $theme.secondaryTextColor};
-  font-size: 0.8rem;
-  cursor: pointer;
-  box-shadow: ${({ $theme }) => $theme.glassShadow};
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  transition:
-    color 0.2s ease,
-    transform 0.2s ease;
-
-  &:hover {
-    color: ${({ $theme }) => $theme.accentColor};
-    transform: translateX(-2px);
-  }
 `;
 
 const Heading = styled.h1<{ $theme: Theme }>`
@@ -290,7 +267,7 @@ const GalleryCard = ({ item, theme }: { item: GalleryItem; theme: Theme }) => {
 };
 
 export const Gallery = () => {
-  const { theme, setActiveView } = useContext(AppContext);
+  const { theme } = useContext(AppContext);
   const [filter, setFilter] = useState<GalleryFilter>('全部');
   const [items, setItems] = useState<GalleryItem[]>(galleryItems);
   const [fromR2, setFromR2] = useState(false);
@@ -317,18 +294,8 @@ export const Gallery = () => {
   );
 
   return (
-    <Page data-v2="gallery">
+    <Page data-page-root data-v2="gallery">
       <TopBar>
-        <BackButton
-          type="button"
-          $theme={theme}
-          aria-label="返回首页"
-          onClick={() => {
-            setActiveView('home');
-          }}
-        >
-          ← 首页
-        </BackButton>
         <Heading $theme={theme}>画廊</Heading>
       </TopBar>
       <Subtitle $theme={theme}>

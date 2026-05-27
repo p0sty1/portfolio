@@ -32,10 +32,11 @@ export const FAVORITE_CATEGORIES: {
   { id: 'song', label: '歌曲', filterLabel: '歌曲' },
   { id: 'celebrity', label: '明星', filterLabel: '明星' },
   { id: 'video', label: '视频', filterLabel: '视频' },
-  { id: 'pornstar', label: '私人', filterLabel: '私人' },
+  { id: 'pornstar', label: 'Porn Star', filterLabel: 'Porn Star' },
 ];
 
 export type FavoriteFilter =
+  | 'Porn Star'
   | '全部'
   | '动漫'
   | '明星'
@@ -43,8 +44,7 @@ export type FavoriteFilter =
   | '游戏'
   | '电影'
   | '电视'
-  | '视频'
-  | '私人';
+  | '视频';
 
 export const favoriteFilters: FavoriteFilter[] = [
   '全部',
@@ -55,5 +55,5 @@ export const favoriteFilters: FavoriteFilter[] = [
   '歌曲',
   '明星',
   '视频',
-  '私人',
+  'Porn Star',
 ];

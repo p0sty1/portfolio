@@ -1,5 +1,7 @@
 import type { JSX } from 'react';
 
+import { AppView } from './view.interface';
+
 export interface Content {
   display: string;
 }
@@ -12,17 +14,6 @@ export interface Avatar {
   src?: string;
 }
 
-export interface DoingItem {
-  name: string;
-  display: string;
-  description: string;
-  icon: JSX.Element;
-  /** iOS-style app icon background gradient */
-  iconGradient: string;
-  /** `#gallery` / `#guestbook` switch view; other hashes are placeholders */
-  href: string;
-}
-
 export interface ContactItem {
   name: string;
   display: string;
@@ -32,11 +23,23 @@ export interface ContactItem {
   icon: JSX.Element;
 }
 
+/** Primary sidebar navigation (Instagram-style). */
+export interface NavItem {
+  name: string;
+  display: string;
+  view: AppView;
+  icon: JSX.Element;
+}
+
 export interface Config {
   name: Content;
   title: Content;
   bio: Content;
   avatar: Avatar;
-  doingItems: DoingItem[];
+  navItems: NavItem[];
   dockItems: ContactItem[];
+  brand: {
+    logoAlt: string;
+    logoSrc: string;
+  };
 }

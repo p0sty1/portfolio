@@ -7,6 +7,9 @@ import {
   Guestbook,
   HomeScreen,
   Likes,
+  MobileHeader,
+  MobileNav,
+  Sidebar,
 } from 'components';
 
 import './App.scss';
@@ -18,41 +21,33 @@ const AppViews = () => {
 
   if (activeView === 'gallery') {
     return (
-      <div className="app-viewport">
-        <div className="app-view app-view-gallery" aria-label="Gallery">
-          <Gallery />
-        </div>
+      <div className="app-view app-view-gallery" aria-label="Gallery">
+        <Gallery />
       </div>
     );
   }
 
   if (activeView === 'guestbook') {
     return (
-      <div className="app-viewport">
-        <div className="app-view app-view-guestbook" aria-label="Guestbook">
-          <Guestbook />
-          <Footer />
-        </div>
+      <div className="app-view app-view-guestbook" aria-label="Guestbook">
+        <Guestbook />
+        <Footer />
       </div>
     );
   }
 
   if (activeView === 'likes') {
     return (
-      <div className="app-viewport">
-        <div className="app-view app-view-likes" aria-label="Likes">
-          <Likes />
-        </div>
+      <div className="app-view app-view-likes" aria-label="Likes">
+        <Likes />
       </div>
     );
   }
 
   return (
-    <div className="app-viewport">
-      <section id="home" className="app-page app-page-home" aria-label="Home">
-        <HomeScreen />
-      </section>
-    </div>
+    <section id="home" className="app-view app-view-home" aria-label="Home">
+      <HomeScreen />
+    </section>
   );
 };
 
@@ -60,7 +55,6 @@ export const App = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    /** ≤768px: iPhone layout · wider: iPad / desktop web */
     const mediaQuery = '(max-width: 768px)';
     const mediaQueryList = window.matchMedia(mediaQuery);
 
@@ -69,7 +63,6 @@ export const App = () => {
     };
 
     updateIsMobile();
-
     mediaQueryList.addEventListener('change', updateIsMobile);
 
     return () => {
@@ -80,7 +73,15 @@ export const App = () => {
   return (
     <AppProvider config={config} isMobile={isMobile}>
       <main className="app">
-        <AppViews />
+        <div
+          className={`app-shell${isMobile ? ' app-shell-mobile' : ''}`}
+        >
+          {isMobile ? <MobileHeader /> : <Sidebar />}
+          <div className={`app-main${isMobile ? ' app-main-mobile' : ''}`}>
+            <AppViews />
+          </div>
+          {isMobile ? <MobileNav /> : null}
+        </div>
         <Background />
       </main>
     </AppProvider>

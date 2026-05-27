@@ -1,13 +1,10 @@
 import { Email, GitHub, LinkedIn, Resume } from 'icons';
 import {
-  BlogIcon,
-  DailyIcon,
-  FunnyIcon,
-  GalleryIcon,
-  GuestbookIcon,
-  LikesIcon,
-  PhotosIcon,
-} from 'icons/apps';
+  GalleryNavIcon,
+  GuestbookNavIcon,
+  HomeNavIcon,
+  LikesNavIcon,
+} from 'icons/nav';
 import { iosSystemColors as C } from 'styles/iosHomeTokens';
 import { Config } from 'types';
 
@@ -20,69 +17,41 @@ export const config: Config = {
   },
   bio: {
     display:
-      'Building thoughtful web experiences — from interfaces to APIs. Explore apps below or leave a note in the guestbook.',
+      'Building thoughtful web experiences — from interfaces to APIs. Explore sections in the sidebar or leave a note in the guestbook.',
   },
   avatar: {
     initials: 'BJ',
     alt: 'Boyu Jiang profile photo',
     src: '/api/gallery/media/avatar/profile.jpg',
   },
-  doingItems: [
+  brand: {
+    logoSrc: '/brand/jyangbly-logo.png',
+    logoAlt: 'Jyangbly',
+  },
+  navItems: [
     {
-      name: 'daily',
-      display: '日常',
-      description: 'Life updates and little moments.',
-      icon: <DailyIcon />,
-      iconGradient: C.orange,
-      href: '#daily',
+      name: 'home',
+      display: '主页',
+      view: 'home',
+      icon: <HomeNavIcon />,
     },
     {
       name: 'gallery',
       display: '画廊',
-      description: 'Projects and visual work.',
-      icon: <GalleryIcon />,
-      iconGradient: C.blue,
-      href: '#gallery',
-    },
-    {
-      name: 'blog',
-      display: '博客',
-      description: 'Posts and stories.',
-      icon: <BlogIcon />,
-      iconGradient: C.pink,
-      href: '#blog',
+      view: 'gallery',
+      icon: <GalleryNavIcon />,
     },
     {
       name: 'likes',
       display: '喜欢',
-      description: '电影、动漫、游戏与更多收藏。',
-      icon: <LikesIcon />,
-      iconGradient: C.purple,
-      href: '#likes',
-    },
-    {
-      name: 'photos',
-      display: '照片',
-      description: 'Moments in stills.',
-      icon: <PhotosIcon />,
-      iconGradient: C.green,
-      href: '#photos',
-    },
-    {
-      name: 'funny',
-      display: '趣味',
-      description: 'Memes and side quests.',
-      icon: <FunnyIcon />,
-      iconGradient: C.yellow,
-      href: '#funny',
+      view: 'likes',
+      icon: <LikesNavIcon />,
     },
     {
       name: 'guestbook',
       display: '留言',
-      description: 'Leave a note.',
-      icon: <GuestbookIcon />,
-      iconGradient: C.indigo,
-      href: '#guestbook',
+      view: 'guestbook',
+      icon: <GuestbookNavIcon />,
     },
   ],
   dockItems: [
