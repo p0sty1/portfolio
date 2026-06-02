@@ -125,9 +125,9 @@ describe('application tests', () => {
     expect(screen.queryByTestId('toggle')).not.toBeInTheDocument();
   });
 
-  it('should use dark background', () => {
+  it('should use the app background', () => {
     expect(screen.getByTestId('background')).toHaveStyle({
-      backgroundColor: '#0c0c0f',
+      backgroundColor: '#f6f7f8',
     });
   });
 

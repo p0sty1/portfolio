@@ -55,7 +55,11 @@
     ],
     "coveragePathIgnorePatterns": [
       "/types/"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^react-markdown$": "<rootDir>/src/__mocks__/reactMarkdown.tsx",
+      "^remark-gfm$": "<rootDir>/src/__mocks__/remarkGfm.ts"
+    }
   },
   "overrides": {
     "nth-check": "^2.0.1",
