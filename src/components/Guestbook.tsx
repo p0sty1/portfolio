@@ -14,47 +14,60 @@ interface GuestbookRow {
 
 const TABLE = 'portfolio_demo_notes';
 
-
 const Page = styled.div`
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: 100%;
-  max-width: 56rem;
+  max-width: 48rem;
   margin: 0 auto;
   box-sizing: border-box;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 
   @media (width >= 769px) {
-    padding: 2rem clamp(1.25rem, 4vw, 2rem) 1.5rem;
+    padding: 1.35rem clamp(1.2rem, 4vw, 2.2rem) 3rem;
   }
 `;
 
-const TopBar = styled.div`
-  margin-bottom: 2rem;
+const RoomHeader = styled.header<{ $theme: Theme }>`
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 16px;
+  background: ${({ $theme }) => $theme.cardBackground};
+  box-shadow: ${({ $theme }) => $theme.glassShadow};
+`;
+
+const Eyebrow = styled.span<{ $theme: Theme }>`
+  display: inline-flex;
+  margin-bottom: 0.35rem;
+  color: ${({ $theme }) => $theme.tertiaryTextColor};
+  font-size: 0.74rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 `;
 
 const Heading = styled.h1<{ $theme: Theme }>`
   margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
-  font-weight: 600;
-  color: ${({ $theme }) => $theme.accentColor};
-`;
-
-const Subtitle = styled.p<{ $theme: Theme }>`
-  margin: 0 0 1.75rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: ${({ $theme }) => $theme.tertiaryTextColor};
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-size: clamp(1.35rem, 4vw, 2rem);
+  font-weight: 820;
+  line-height: 1.08;
+  letter-spacing: 0;
 `;
 
 const Panel = styled.div<{ $theme: Theme }>`
+  margin-top: 1rem;
   padding: clamp(1.25rem, 3vw, 1.75rem);
-  border: 1px solid ${({ $theme }) => $theme.glassBorder};
-  border-radius: 20px;
-  background: ${({ $theme }) => $theme.glassBackground};
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 16px;
+  background: ${({ $theme }) => $theme.cardBackground};
   box-shadow: ${({ $theme }) => $theme.glassShadow};
-  backdrop-filter: blur(22px) saturate(165%);
-  -webkit-backdrop-filter: blur(22px) saturate(165%);
 `;
 
 const Muted = styled.p<{ $theme: Theme }>`
@@ -80,7 +93,7 @@ const Input = styled.input<{ $theme: Theme }>`
   flex: 1;
   min-width: 0;
   padding: 0.75rem 1rem;
-  border-radius: 12px;
+  border-radius: 999px;
   border: 1px solid ${({ $theme }) => $theme.glassBorder};
   background: ${({ $theme }) => $theme.iconGlassBackground};
   color: ${({ $theme }) => $theme.primaryTextColor};
@@ -95,10 +108,10 @@ const Input = styled.input<{ $theme: Theme }>`
 const SubmitButton = styled.button<{ $theme: Theme }>`
   cursor: pointer;
   padding: 0.75rem 1.15rem;
-  border-radius: 12px;
+  border-radius: 999px;
   border: 1px solid ${({ $theme }) => $theme.glassBorder};
-  background: ${({ $theme }) => $theme.iconGlassBackground};
-  color: ${({ $theme }) => $theme.accentColor};
+  background: ${({ $theme }) => $theme.primaryTextColor};
+  color: ${({ $theme }) => $theme.cardBackground};
   font-size: 0.9rem;
   font-weight: 500;
   &:disabled {
@@ -212,11 +225,15 @@ export const Guestbook = () => {
   if (!client) {
     return (
       <Page data-page-root data-v2="guestbook">
-        <TopBar>
+        <RoomHeader $theme={theme}>
+          <Eyebrow $theme={theme}>Guestbook / Notes</Eyebrow>
           <Heading $theme={theme}>留言板</Heading>
-        </TopBar>
+        </RoomHeader>
         <Panel $theme={theme}>
-          <Muted $theme={theme}>未连接 Supabase，请在 .env 中配置。</Muted>
+          <Muted $theme={theme}>
+            未连接 Supabase：本地在 .env.local 配置
+            REACT_APP_SUPABASE_*；线上需带环境变量 重新构建部署。
+          </Muted>
         </Panel>
       </Page>
     );
@@ -224,12 +241,10 @@ export const Guestbook = () => {
 
   return (
     <Page data-page-root data-v2="guestbook">
-      <TopBar>
+      <RoomHeader $theme={theme}>
+        <Eyebrow $theme={theme}>Guestbook / Notes</Eyebrow>
         <Heading $theme={theme}>留言板</Heading>
-      </TopBar>
-      <Subtitle $theme={theme}>
-        写下你想说的话，或看看其他人的留言。
-      </Subtitle>
+      </RoomHeader>
       <Panel $theme={theme}>
         {error ? <ErrorText $theme={theme}>{error}</ErrorText> : null}
         <Form onSubmit={onSubmit}>

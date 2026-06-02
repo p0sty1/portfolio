@@ -1,9 +1,13 @@
 import { Email, GitHub, LinkedIn, Resume } from 'icons';
 import {
+  AskNavIcon,
+  BlogNavIcon,
+  FunNavIcon,
   GalleryNavIcon,
   GuestbookNavIcon,
   HomeNavIcon,
   LikesNavIcon,
+  ProfileNavIcon,
 } from 'icons/nav';
 import { iosSystemColors as C } from 'styles/iosHomeTokens';
 import { Config } from 'types';
@@ -13,11 +17,10 @@ export const config: Config = {
     display: 'Boyu Jiang',
   },
   title: {
-    display: 'Full Stack Developer',
+    display: 'Amateur In Everything',
   },
   bio: {
-    display:
-      'Building thoughtful web experiences — from interfaces to APIs. Explore sections in the sidebar or leave a note in the guestbook.',
+    display: '',
   },
   avatar: {
     initials: 'BJ',
@@ -25,21 +28,39 @@ export const config: Config = {
     src: '/api/gallery/media/avatar/profile.jpg',
   },
   brand: {
-    logoSrc: '/brand/jyangbly-logo.png',
+    logoSrc: '/brand/jyangbly-logo-transparent.png',
     logoAlt: 'Jyangbly',
   },
   navItems: [
     {
       name: 'home',
-      display: '主页',
+      display: '动态',
       view: 'home',
       icon: <HomeNavIcon />,
+    },
+    {
+      name: 'profile',
+      display: '身份',
+      view: 'profile',
+      icon: <ProfileNavIcon />,
     },
     {
       name: 'gallery',
       display: '画廊',
       view: 'gallery',
       icon: <GalleryNavIcon />,
+    },
+    {
+      name: 'blog',
+      display: '博客',
+      view: 'blog',
+      icon: <BlogNavIcon />,
+    },
+    {
+      name: 'ask',
+      display: '提问',
+      view: 'ask',
+      icon: <AskNavIcon />,
     },
     {
       name: 'likes',
@@ -52,6 +73,12 @@ export const config: Config = {
       display: '留言',
       view: 'guestbook',
       icon: <GuestbookNavIcon />,
+    },
+    {
+      name: 'fun',
+      display: '玩具',
+      view: 'fun',
+      icon: <FunNavIcon />,
     },
   ],
   dockItems: [

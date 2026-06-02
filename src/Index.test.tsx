@@ -58,49 +58,19 @@ describe('application tests', () => {
     expect(screen.getByTestId('nav-guestbook')).toBeVisible();
   });
 
-  it('should render avatar image from R2', () => {
-    const avatar = screen.getByTestId('avatar');
-
-    expect(avatar).toBeVisible();
-    expect(avatar).toHaveAccessibleName(/Boyu Jiang profile photo/);
-    const img = avatar.querySelector('img');
-    expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute('src', '/api/gallery/media/avatar/profile.jpg');
-    expect(img).toHaveAttribute('alt', 'Boyu Jiang profile photo');
-  });
-
-  it('should render name: Boyu Jiang', () => {
-    const element = screen.getByTestId('name');
-
-    checkContent(element, /^Boyu Jiang$/, undefined, true);
-  });
-
-  it('should render title: Full Stack Developer', () => {
-    const element = screen.getByTestId('title');
-
-    checkContent(element, /^Full Stack Developer$/, undefined, true);
-  });
-
-  it('should render bio', () => {
-    const element = screen.getByTestId('bio');
-
-    expect(element).toBeVisible();
-    expect(element).toHaveTextContent(/Building thoughtful web experiences/);
-  });
-
-  it('should render home screen with profile and quick links', () => {
-    expect(screen.getByTestId('profile-widget')).toBeVisible();
+  it('should render home screen with timeline feed', () => {
     expect(screen.getByTestId('home-screen')).toBeVisible();
-    expect(screen.getByTestId('quick-gallery')).toBeVisible();
-    expect(screen.getByTestId('quick-likes')).toBeVisible();
-    expect(screen.getByTestId('quick-guestbook')).toBeVisible();
+    expect(screen.getByTestId('timeline-feed')).toBeVisible();
+    expect(screen.getByTestId('timeline-composer')).toBeVisible();
   });
 
-  it('should render external links in sidebar', () => {
-    expect(screen.getByTestId('sidebar-github')).toBeVisible();
-    expect(screen.getByTestId('sidebar-linkedin')).toBeVisible();
-    expect(screen.getByTestId('sidebar-resume')).toBeVisible();
-    expect(screen.getByTestId('sidebar-email')).toBeVisible();
+  it('should render external links in profile', () => {
+    fireEvent.click(screen.getByTestId('nav-profile'));
+
+    expect(screen.getByTestId('profile-github')).toBeVisible();
+    expect(screen.getByTestId('profile-linkedin')).toBeVisible();
+    expect(screen.getByTestId('profile-resume')).toBeVisible();
+    expect(screen.getByTestId('profile-email')).toBeVisible();
   });
 
   it('should switch to guestbook from sidebar', () => {

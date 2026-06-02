@@ -12,6 +12,8 @@ body {
   padding: 0;
   height: 100%;
   overflow: hidden;
+  color: #101010;
+  background: #f6f7f8;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -32,6 +34,7 @@ body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  background: #f6f7f8;
 }
 
 .app-shell {
@@ -42,6 +45,7 @@ body {
   display: flex;
   flex-direction: row;
   width: 100%;
+  color: #101010;
 }
 
 .app-shell-mobile {
@@ -78,20 +82,35 @@ body {
   overscroll-behavior-y: contain;
 }
 
-.app-view-home {
+.app-view-home,
+.app-view-profile,
+.app-view-blog,
+.app-view-ask,
+.app-view-guestbook,
+.app-view-likes,
+.app-view-gallery,
+.app-view-fun {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 .app-view-gallery,
 .app-view-guestbook,
-.app-view-likes {
+.app-view-likes,
+.app-view-profile,
+.app-view-blog,
+.app-view-ask,
+.app-view-fun {
   justify-content: flex-start;
   padding: 0;
 }
 
 .app-view-gallery > *,
-.app-view-likes > * {
+.app-view-likes > *,
+.app-view-profile > *,
+.app-view-blog > *,
+.app-view-ask > *,
+.app-view-fun > * {
   flex: 1;
   min-height: 0;
   width: 100%;

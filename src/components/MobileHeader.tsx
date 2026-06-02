@@ -15,16 +15,11 @@ const Header = styled.header<{ $theme: Theme }>`
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: calc(4.25rem + env(safe-area-inset-top, 0px));
-  padding: calc(0.75rem + env(safe-area-inset-top, 0px)) 1.25rem 0.85rem;
+  min-height: calc(3.85rem + env(safe-area-inset-top, 0px));
+  padding: calc(0.55rem + env(safe-area-inset-top, 0px)) 1rem 0.55rem;
   box-sizing: border-box;
   border-bottom: 1px solid ${({ $theme }) => $theme.cardBorder};
-  background: ${({ $theme }) =>
-    $theme.key === 'dark'
-      ? 'rgba(22, 22, 29, 0.92)'
-      : 'rgba(255, 255, 255, 0.92)'};
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background: ${({ $theme }) => $theme.cardBackground};
 `;
 
 export const MobileHeader = () => {

@@ -11,40 +11,43 @@ const Bar = styled.nav<{ $theme: Theme }>`
   flex-shrink: 0;
   display: flex;
   align-items: stretch;
-  justify-content: space-around;
+  justify-content: flex-start;
+  gap: 0.15rem;
   width: 100%;
-  min-height: calc(3.75rem + env(safe-area-inset-bottom, 0px));
-  padding: 0.4rem 0.35rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
+  min-height: calc(4.2rem + env(safe-area-inset-bottom, 0px));
+  margin: 0;
+  padding: 0.35rem 0.55rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
+  overflow-x: auto;
   border-top: 1px solid ${({ $theme }) => $theme.cardBorder};
-  background: ${({ $theme }) =>
-    $theme.key === 'dark'
-      ? 'rgba(22, 22, 29, 0.94)'
-      : 'rgba(255, 255, 255, 0.94)'};
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background: ${({ $theme }) => $theme.cardBackground};
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const Tab = styled.button<{ $active: boolean; $theme: Theme }>`
-  flex: 1;
+  flex: 0 0 4.05rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.28rem;
+  gap: 0.24rem;
   min-width: 0;
   min-height: 3rem;
   padding: 0.35rem 0.2rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   background: ${({ $active, $theme }) =>
-    $active ? $theme.spotlightColor : 'transparent'};
+    $active ? $theme.iconGlassBackground : 'transparent'};
   cursor: pointer;
   font: inherit;
   font-size: clamp(0.58rem, 2.8vw, 0.68rem);
   font-weight: ${({ $active }) => ($active ? 700 : 500)};
   color: ${({ $active, $theme }) =>
-    $active ? $theme.accentColor : $theme.tertiaryTextColor};
+    $active ? $theme.primaryTextColor : $theme.tertiaryTextColor};
   -webkit-tap-highlight-color: transparent;
   transition:
     background 0.15s ease,
@@ -56,8 +59,8 @@ const Tab = styled.button<{ $active: boolean; $theme: Theme }>`
   }
 
   svg {
-    width: clamp(1.5rem, 6vw, 1.65rem);
-    height: clamp(1.5rem, 6vw, 1.65rem);
+    width: clamp(1.35rem, 5.5vw, 1.55rem);
+    height: clamp(1.35rem, 5.5vw, 1.55rem);
     flex-shrink: 0;
   }
 

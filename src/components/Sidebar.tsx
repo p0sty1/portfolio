@@ -13,9 +13,9 @@ const Aside = styled.aside<{ $theme: Theme }>`
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  width: var(--sidebar-width, 16.5rem);
+  width: var(--sidebar-width, 16.25rem);
   height: 100%;
-  padding: 1.25rem 0.75rem 1rem;
+  padding: 1.25rem 0.9rem 1rem;
   box-sizing: border-box;
   border-right: 1px solid ${({ $theme }) => $theme.cardBorder};
   background: ${({ $theme }) => $theme.cardBackground};
@@ -24,8 +24,8 @@ const Aside = styled.aside<{ $theme: Theme }>`
 const LogoRow = styled.div`
   display: flex;
   align-items: center;
-  padding: 0.65rem 0.75rem 1.35rem;
-  min-height: 4rem;
+  padding: 0.15rem 0.55rem 1.75rem;
+  min-height: 4.15rem;
 `;
 
 const Nav = styled.nav`
@@ -39,68 +39,40 @@ const Nav = styled.nav`
 const NavButton = styled.button<{ $active: boolean; $theme: Theme }>`
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.95rem;
   width: 100%;
-  padding: 0.72rem 0.85rem;
+  min-height: 3rem;
+  padding: 0.68rem 0.8rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 999px;
   cursor: pointer;
   text-align: left;
   font: inherit;
-  font-size: 1rem;
-  font-weight: ${({ $active }) => ($active ? 700 : 500)};
+  font-size: 0.98rem;
+  font-weight: ${({ $active }) => ($active ? 760 : 560)};
   color: ${({ $active, $theme }) =>
     $active ? $theme.primaryTextColor : $theme.secondaryTextColor};
   background: ${({ $active, $theme }) =>
-    $active ? $theme.spotlightColor : 'transparent'};
+    $active ? $theme.iconGlassBackground : 'transparent'};
   transition:
     background 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    transform 0.15s ease;
 
   &:hover {
     background: ${({ $theme }) => $theme.glassBackgroundHover};
     color: ${({ $theme }) => $theme.primaryTextColor};
   }
 
-  svg {
-    width: 1.5rem;
-    height: 1.5rem;
-    flex-shrink: 0;
-  }
-`;
-
-const ExternalSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.75rem 0 0.5rem;
-  margin-top: 0.35rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-`;
-
-const ExternalLink = styled.a<{ $theme: Theme }>`
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.55rem 0.85rem;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: ${({ $theme }) => $theme.tertiaryTextColor};
-  text-decoration: none;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-
-  &:hover {
-    color: ${({ $theme }) => $theme.secondaryTextColor};
-    background: ${({ $theme }) => $theme.glassBackground};
+  &:active {
+    transform: scale(0.98);
   }
 
   svg {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1.45rem;
+    height: 1.45rem;
     flex-shrink: 0;
+    stroke-width: ${({ $active }) => ($active ? 2.35 : 2)};
   }
 `;
 
@@ -114,20 +86,20 @@ const ProfileFooter = styled.div<{ $theme: Theme }>`
   border-top: 1px solid ${({ $theme }) => $theme.cardBorder};
 `;
 
-const ProfileAvatar = styled.div<{ $hasImage?: boolean; $theme: Theme; }>`
+const ProfileAvatar = styled.div<{ $hasImage?: boolean; $theme: Theme }>`
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  border: 1px solid ${({ $theme }) => $theme.glassBorder};
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
   background: ${({ $theme, $hasImage }) =>
     $hasImage ? 'transparent' : $theme.iconGlassBackground};
   display: grid;
   place-items: center;
   font-size: 0.85rem;
   font-weight: 600;
-  color: ${({ $theme }) => $theme.accentColor};
+  color: ${({ $theme }) => $theme.primaryTextColor};
 
   img {
     width: 100%;
@@ -172,11 +144,7 @@ export const Sidebar = () => {
   return (
     <Aside data-v2="sidebar" $theme={theme} aria-label="主导航">
       <LogoRow>
-        <BrandLogo
-          alt={config.brand.logoAlt}
-          src={logoSrc}
-          variant="sidebar"
-        />
+        <BrandLogo alt={config.brand.logoAlt} src={logoSrc} variant="sidebar" />
       </LogoRow>
 
       <Nav aria-label="页面">
@@ -197,25 +165,6 @@ export const Sidebar = () => {
           </NavButton>
         ))}
       </Nav>
-
-      <ExternalSection>
-        {config.dockItems.map(
-          ({ name, display, ariaLabel, href, icon }) => (
-            <ExternalLink
-              key={name}
-              data-v2={`sidebar-${name}`}
-              $theme={theme}
-              href={href}
-              aria-label={`${display}，${ariaLabel}`}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {icon}
-              {display}
-            </ExternalLink>
-          ),
-        )}
-      </ExternalSection>
 
       <ProfileFooter $theme={theme}>
         <ProfileAvatar

@@ -1,1 +1,9 @@
-export type AppView = 'gallery' | 'guestbook' | 'home' | 'likes';
+export type AppView =
+  | 'ask'
+  | 'blog'
+  | 'fun'
+  | 'gallery'
+  | 'guestbook'
+  | 'home'
+  | 'likes'
+  | 'profile';

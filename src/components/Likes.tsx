@@ -17,40 +17,57 @@ const TABLE = 'portfolio_favorites';
 
 const Page = styled.div`
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: 100%;
-  max-width: 56rem;
+  max-width: 58rem;
   margin: 0 auto;
   box-sizing: border-box;
-
-  @media (width >= 769px) {
-    padding: 2rem clamp(1.25rem, 4vw, 2rem) 1.5rem;
-  }
   text-align: left;
   display: flex;
   flex-direction: column;
   min-height: 0;
   height: 100%;
+
+  @media (width >= 769px) {
+    padding: 1.35rem clamp(1.2rem, 4vw, 2.2rem) 3rem;
+  }
 `;
 
-const TopBar = styled.div`
-  margin-bottom: 1.25rem;
+const RoomHeader = styled.header<{ $theme: Theme }>`
+  position: relative;
+  overflow: hidden;
   flex-shrink: 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 16px;
+  background: ${({ $theme }) => $theme.cardBackground};
+  box-shadow: ${({ $theme }) => $theme.glassShadow};
+`;
+
+const Eyebrow = styled.span<{ $theme: Theme }>`
+  display: inline-flex;
+  margin-bottom: 0.35rem;
+  color: ${({ $theme }) => $theme.tertiaryTextColor};
+  font-size: 0.74rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 `;
 
 const Heading = styled.h1<{ $theme: Theme }>`
   margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
-  font-weight: 600;
-  color: ${({ $theme }) => $theme.accentColor};
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-size: clamp(1.35rem, 4vw, 2rem);
+  font-weight: 820;
+  line-height: 1.08;
+  letter-spacing: 0;
 `;
 
-const Subtitle = styled.p<{ $theme: Theme }>`
-  margin: 0 0 1rem;
+const EmptyText = styled.p<{ $theme: Theme }>`
+  margin: 1rem 0 0;
   font-size: 0.88rem;
   line-height: 1.55;
   color: ${({ $theme }) => $theme.tertiaryTextColor};
-  flex-shrink: 0;
 `;
 
 const FilterRow = styled.div`
@@ -58,7 +75,7 @@ const FilterRow = styled.div`
   gap: 0.5rem;
   overflow-x: auto;
   padding-bottom: 0.35rem;
-  margin-bottom: 1rem;
+  margin: 1rem 0;
   flex-shrink: 0;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -74,11 +91,11 @@ const FilterChip = styled.button<{ $active: boolean; $theme: Theme }>`
   border-radius: 999px;
   border: 1px solid
     ${({ $active, $theme }) =>
-      $active ? $theme.accentColor : $theme.glassBorder};
+      $active ? $theme.primaryTextColor : $theme.glassBorder};
   background: ${({ $active, $theme }) =>
-    $active ? $theme.spotlightColor : $theme.glassBackground};
+    $active ? $theme.primaryTextColor : $theme.cardBackground};
   color: ${({ $active, $theme }) =>
-    $active ? $theme.accentColor : $theme.secondaryTextColor};
+    $active ? $theme.cardBackground : $theme.secondaryTextColor};
   font-size: 0.8rem;
   font-weight: ${({ $active }) => ($active ? 600 : 400)};
   cursor: pointer;
@@ -109,35 +126,27 @@ const CategoryTitle = styled.h2<{ $theme: Theme }>`
   color: ${({ $theme }) => $theme.tertiaryTextColor};
 `;
 
-const CardRow = styled.div`
-  display: flex;
+const CardGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.25rem, 1fr));
   gap: 0.75rem;
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  width: 100%;
 
-  &::-webkit-scrollbar {
-    display: none;
+  @media (width >= 769px) {
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 10.5rem));
   }
 `;
 
 const Card = styled.a<{ $clickable: boolean; $theme: Theme }>`
-  flex: 0 0 auto;
-  width: 8.75rem;
-  scroll-snap-align: start;
-
-  @media (width <= 768px) {
-    width: clamp(7.5rem, 38vw, 8.5rem);
-  }
+  width: 100%;
+  min-width: 0;
   text-decoration: none;
   color: inherit;
-  border-radius: 14px;
-  border: 1px solid ${({ $theme }) => $theme.glassBorder};
+  border-radius: 16px;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
   background: ${({ $theme }) => $theme.cardBackground};
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+  box-shadow: ${({ $theme }) => $theme.glassShadow};
   cursor: ${({ $clickable }) => ($clickable ? 'pointer' : 'default')};
   pointer-events: ${({ $clickable }) => ($clickable ? 'auto' : 'none')};
   transition:
@@ -147,10 +156,8 @@ const Card = styled.a<{ $clickable: boolean; $theme: Theme }>`
   &:hover {
     transform: ${({ $clickable }) =>
       $clickable ? 'translateY(-2px)' : 'none'};
-    box-shadow: ${({ $clickable }) =>
-      $clickable
-        ? '0 8px 24px rgba(0, 0, 0, 0.28)'
-        : '0 4px 16px rgba(0, 0, 0, 0.16)'};
+    box-shadow: ${({ $clickable, $theme }) =>
+      $clickable ? $theme.glassShadowHover : $theme.glassShadow};
   }
 
   &:active {
@@ -372,17 +379,10 @@ export const Likes = () => {
 
   return (
     <Page data-page-root data-v2="likes">
-      <TopBar>
+      <RoomHeader $theme={theme}>
+        <Eyebrow $theme={theme}>Likes / Collection</Eyebrow>
         <Heading $theme={theme}>喜欢</Heading>
-      </TopBar>
-      <Subtitle $theme={theme}>
-        {loading
-          ? '正在加载收藏…'
-          : client
-            ? '电影 · 电视 · 动漫 · 游戏 · 歌曲 · 明星 · 视频 · Porn Star'
-            : '未配置 Supabase，请在 .env.local 填写 REACT_APP_SUPABASE_*'}
-        {error ? ` · ${error}` : null}
-      </Subtitle>
+      </RoomHeader>
       <FilterRow role="tablist" aria-label="喜欢分类">
         {favoriteFilters.map((chip) => (
           <FilterChip
@@ -402,8 +402,9 @@ export const Likes = () => {
         ))}
       </FilterRow>
       <ScrollBody>
+        {error ? <EmptyText $theme={theme}>{error}</EmptyText> : null}
         {sections.length === 0 && !loading ? (
-          <Subtitle $theme={theme}>暂无收藏内容。</Subtitle>
+          <EmptyText $theme={theme}>暂无收藏内容。</EmptyText>
         ) : (
           sections.map((section) => (
             <CategoryBlock
@@ -413,11 +414,11 @@ export const Likes = () => {
               {filter === '全部' ? (
                 <CategoryTitle $theme={theme}>{section.label}</CategoryTitle>
               ) : null}
-              <CardRow>
+              <CardGrid>
                 {section.items.map((item) => (
                   <FavoriteCard key={item.id} item={item} theme={theme} />
                 ))}
-              </CardRow>
+              </CardGrid>
             </CategoryBlock>
           ))
         )}

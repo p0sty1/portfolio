@@ -44,6 +44,7 @@ npm-debug.log*
 Thumbs.db
 deploy-manifest.json
 /deprecated
+/social-prototype/
 
 # Netlify configuration file
 .netlify

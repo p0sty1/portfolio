@@ -10,23 +10,12 @@ const Widget = styled.section<{ $compact?: boolean; $theme: Theme }>`
   z-index: 1;
   flex-shrink: 0;
   width: 100%;
-  padding: ${({ $compact }) => ($compact ? '0.85rem 1rem' : '1.1rem 1.35rem')};
-  border-radius: ${({ $compact }) => ($compact ? '20px' : '24px')};
-  border: 1px solid ${({ $theme }) => $theme.glassBorder};
-  background: ${({ $theme }) => $theme.glassBackground};
+  padding: ${({ $compact }) => ($compact ? '0.9rem 1rem' : '1.05rem 1.15rem')};
+  border-radius: 16px;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  background: ${({ $theme }) => $theme.cardBackground};
   box-shadow: ${({ $theme }) => $theme.glassShadow};
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
   text-align: left;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: ${({ $theme }) => $theme.glassInsetHighlight};
-    pointer-events: none;
-  }
 `;
 
 const Inner = styled.div`
@@ -42,14 +31,14 @@ const Avatar = styled.div<{ $hasImage?: boolean; $theme: Theme }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: clamp(4.5rem, 18vw, 5.75rem);
+  width: clamp(3.6rem, 16vw, 4.6rem);
   aspect-ratio: 1;
-  border-radius: 22%;
+  border-radius: 50%;
   overflow: hidden;
-  border: 1px solid ${({ $theme }) => $theme.glassBorder};
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
   background: ${({ $theme, $hasImage }) =>
     $hasImage ? 'transparent' : $theme.iconGlassBackground};
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  box-shadow: none;
 
   img {
     width: 100%;
@@ -74,8 +63,8 @@ const Text = styled.div`
 
 const Name = styled.h1<{ $theme: Theme }>`
   margin: 0;
-  font-size: clamp(1.35rem, 4.5vw, 1.85rem);
-  font-weight: 700;
+  font-size: clamp(1.05rem, 4vw, 1.25rem);
+  font-weight: 780;
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: ${({ $theme }) => $theme.primaryTextColor};
@@ -83,9 +72,9 @@ const Name = styled.h1<{ $theme: Theme }>`
 
 const Title = styled.p<{ $theme: Theme }>`
   margin: 0;
-  font-size: clamp(0.82rem, 2.5vw, 1rem);
-  font-weight: 500;
-  color: ${({ $theme }) => $theme.accentColor};
+  font-size: clamp(0.78rem, 2.5vw, 0.9rem);
+  font-weight: 540;
+  color: ${({ $theme }) => $theme.secondaryTextColor};
 `;
 
 const Bio = styled.p<{ $theme: Theme }>`
@@ -106,6 +95,7 @@ interface ProfileWidgetProps {
 export const ProfileWidget = ({ compact = true }: ProfileWidgetProps) => {
   const { config, theme } = useContext(AppContext);
   const avatarSrc = config.avatar.src?.trim();
+  const bio = config.bio.display.trim();
 
   return (
     <Widget
@@ -137,9 +127,11 @@ export const ProfileWidget = ({ compact = true }: ProfileWidgetProps) => {
           <Title data-v2="title" $theme={theme}>
             {config.title.display}
           </Title>
-          <Bio data-v2="bio" $theme={theme}>
-            {config.bio.display}
-          </Bio>
+          {bio ? (
+            <Bio data-v2="bio" $theme={theme}>
+              {bio}
+            </Bio>
+          ) : null}
         </Text>
       </Inner>
     </Widget>

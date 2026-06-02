@@ -1,14 +1,18 @@
 import { useContext, useEffect, useState } from 'react';
 
 import {
+  AskRoom,
   Background,
+  BlogRoom,
   Footer,
+  FunRoom,
   Gallery,
   Guestbook,
   HomeScreen,
   Likes,
   MobileHeader,
   MobileNav,
+  ProfileRoom,
   Sidebar,
 } from 'components';
 
@@ -18,6 +22,14 @@ import { config } from './config';
 
 const AppViews = () => {
   const { activeView } = useContext(AppContext);
+
+  if (activeView === 'profile') {
+    return (
+      <div className="app-view app-view-profile" aria-label="Profile">
+        <ProfileRoom />
+      </div>
+    );
+  }
 
   if (activeView === 'gallery') {
     return (
@@ -36,10 +48,34 @@ const AppViews = () => {
     );
   }
 
+  if (activeView === 'blog') {
+    return (
+      <div className="app-view app-view-blog" aria-label="Blog">
+        <BlogRoom />
+      </div>
+    );
+  }
+
+  if (activeView === 'ask') {
+    return (
+      <div className="app-view app-view-ask" aria-label="Ask">
+        <AskRoom />
+      </div>
+    );
+  }
+
   if (activeView === 'likes') {
     return (
       <div className="app-view app-view-likes" aria-label="Likes">
         <Likes />
+      </div>
+    );
+  }
+
+  if (activeView === 'fun') {
+    return (
+      <div className="app-view app-view-fun" aria-label="Fun">
+        <FunRoom />
       </div>
     );
   }
@@ -73,9 +109,7 @@ export const App = () => {
   return (
     <AppProvider config={config} isMobile={isMobile}>
       <main className="app">
-        <div
-          className={`app-shell${isMobile ? ' app-shell-mobile' : ''}`}
-        >
+        <div className={`app-shell${isMobile ? ' app-shell-mobile' : ''}`}>
           {isMobile ? <MobileHeader /> : <Sidebar />}
           <div className={`app-main${isMobile ? ' app-main-mobile' : ''}`}>
             <AppViews />
