@@ -20,56 +20,83 @@ const Page = styled.main`
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 58rem;
+  max-width: 76rem;
   margin: 0 auto;
   box-sizing: border-box;
   text-align: left;
 
   @media (width >= 769px) {
-    padding: 1.35rem clamp(1.2rem, 4vw, 2.2rem) 3rem;
+    padding: clamp(1.5rem, 3vw, 2.4rem) clamp(1.5rem, 4vw, 3rem) 4rem;
   }
 `;
 
 const RoomHeader = styled.header<{ $theme: Theme }>`
   position: relative;
   overflow: hidden;
-  padding: 1rem 1.1rem;
+  padding: clamp(1.35rem, 4vw, 2.8rem);
   border: 1px solid ${({ $theme }) => $theme.cardBorder};
-  border-radius: 16px;
+  border-radius: 8px;
   background: ${({ $theme }) => $theme.cardBackground};
   box-shadow: ${({ $theme }) => $theme.glassShadow};
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto clamp(1.35rem, 4vw, 2.8rem) clamp(1.35rem, 4vw, 2.8rem) auto;
+    width: min(18rem, 34vw);
+    height: 0.35rem;
+    border-radius: 999px;
+    background: ${({ $theme }) => $theme.primaryTextColor};
+  }
 `;
 
 const Eyebrow = styled.span<{ $theme: Theme }>`
   display: inline-flex;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.75rem;
   color: ${({ $theme }) => $theme.tertiaryTextColor};
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 760;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 `;
 
 const Title = styled.h1<{ $theme: Theme }>`
+  max-width: 12ch;
   margin: 0;
   color: ${({ $theme }) => $theme.primaryTextColor};
-  font-size: clamp(1.35rem, 4vw, 2rem);
+  font-size: clamp(2.7rem, 9vw, 6rem);
   font-weight: 820;
-  line-height: 1.08;
+  line-height: 0.98;
   letter-spacing: 0;
+`;
+
+const ThemeBand = styled.div<{ $theme: Theme }>`
+  display: inline-flex;
+  margin-top: clamp(1.2rem, 3vw, 2rem);
+  padding: 0.7rem 0.9rem;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 999px;
+  background: ${({ $theme }) => $theme.iconGlassBackground};
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-size: 0.92rem;
+  font-weight: 760;
 `;
 
 const Stack = styled.div`
   display: grid;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.15rem;
+  margin-top: 1.25rem;
 `;
 
 const PostLink = styled.button<{ $theme: Theme }>`
   width: 100%;
-  padding: 1.1rem;
+  min-height: 16rem;
+  display: grid;
+  align-content: space-between;
+  gap: 1.5rem;
+  padding: clamp(1.35rem, 4vw, 2.25rem);
   border: 1px solid ${({ $theme }) => $theme.cardBorder};
-  border-radius: 16px;
+  border-radius: 8px;
   background: ${({ $theme }) => $theme.cardBackground};
   box-shadow: ${({ $theme }) => $theme.glassShadow};
   cursor: pointer;
@@ -77,10 +104,12 @@ const PostLink = styled.button<{ $theme: Theme }>`
   font: inherit;
   transition:
     transform 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 
   &:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    border-color: ${({ $theme }) => $theme.cardHoverBorder};
     box-shadow: ${({ $theme }) => $theme.glassShadowHover};
   }
 
@@ -92,95 +121,123 @@ const PostLink = styled.button<{ $theme: Theme }>`
 const PostMeta = styled.div<{ $theme: Theme }>`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.55rem;
   align-items: center;
-  margin-bottom: 0.75rem;
   color: ${({ $theme }) => $theme.tertiaryTextColor};
-  font-size: 0.72rem;
+  font-size: 0.8rem;
+  font-weight: 720;
 `;
 
 const PostTitle = styled.h2<{ $theme: Theme }>`
   margin: 0;
   color: ${({ $theme }) => $theme.primaryTextColor};
-  font-size: clamp(1.05rem, 3vw, 1.35rem);
-  line-height: 1.18;
+  font-size: clamp(1.9rem, 5vw, 3.6rem);
+  line-height: 1.03;
   letter-spacing: 0;
 `;
 
 const Excerpt = styled.p<{ $theme: Theme }>`
-  margin: 0.7rem 0 0;
+  max-width: 48rem;
+  margin: 1rem 0 0;
   color: ${({ $theme }) => $theme.secondaryTextColor};
-  font-size: 0.92rem;
+  font-size: clamp(1rem, 2vw, 1.18rem);
   line-height: 1.7;
 `;
 
+const ThemeLine = styled.p<{ $theme: Theme }>`
+  margin: 0 0 0.8rem;
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-size: 0.92rem;
+  font-weight: 780;
+`;
+
+const ReadMore = styled.span<{ $theme: Theme }>`
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.65rem 0.9rem;
+  border-radius: 999px;
+  background: ${({ $theme }) => $theme.primaryTextColor};
+  color: ${({ $theme }) => $theme.cardBackground};
+  font-size: 0.9rem;
+  font-weight: 780;
+`;
+
 const BackButton = styled.button<{ $theme: Theme }>`
-  margin-bottom: 1rem;
-  padding: 0.55rem 0.95rem;
+  margin-bottom: 1.15rem;
+  padding: 0.72rem 1rem;
   border: 1px solid ${({ $theme }) => $theme.cardBorder};
   border-radius: 999px;
   background: ${({ $theme }) => $theme.cardBackground};
   color: ${({ $theme }) => $theme.secondaryTextColor};
   cursor: pointer;
   font: inherit;
-  font-size: 0.82rem;
-  font-weight: 650;
+  font-size: 0.92rem;
+  font-weight: 720;
 `;
 
 const Article = styled.article<{ $theme: Theme }>`
-  padding: clamp(1.25rem, 4vw, 2rem);
+  padding: clamp(1.3rem, 4vw, 3rem);
   border: 1px solid ${({ $theme }) => $theme.cardBorder};
-  border-radius: 16px;
+  border-radius: 8px;
   background: ${({ $theme }) => $theme.cardBackground};
   box-shadow: ${({ $theme }) => $theme.glassShadow};
 `;
 
+const ArticleHeader = styled.header<{ $theme: Theme }>`
+  padding-bottom: clamp(1.25rem, 3vw, 2rem);
+  border-bottom: 1px solid ${({ $theme }) => $theme.gridColor};
+`;
+
 const ArticleTitle = styled.h1<{ $theme: Theme }>`
-  margin: 0 0 0.5rem;
+  max-width: 13ch;
+  margin: 0.9rem 0 0;
   color: ${({ $theme }) => $theme.primaryTextColor};
-  font-size: clamp(1.75rem, 5vw, 2.75rem);
-  font-weight: 780;
-  line-height: 1.08;
+  font-size: clamp(2.35rem, 8vw, 5.25rem);
+  font-weight: 840;
+  line-height: 0.98;
   letter-spacing: 0;
 `;
 
 const MarkdownBody = styled.div<{ $theme: Theme }>`
-  margin-top: 1.5rem;
+  max-width: 58rem;
+  margin-top: clamp(1.4rem, 4vw, 2.4rem);
   color: ${({ $theme }) => $theme.secondaryTextColor};
-  font-size: 0.98rem;
-  line-height: 1.8;
+  font-size: clamp(1.02rem, 1.5vw, 1.14rem);
+  line-height: 1.92;
 
   h2 {
-    margin: 2rem 0 0.75rem;
+    margin: 2.6rem 0 0.9rem;
     color: ${({ $theme }) => $theme.primaryTextColor};
-    font-size: 1.35rem;
-    font-weight: 760;
-    letter-spacing: -0.03em;
+    font-size: clamp(1.55rem, 3vw, 2.1rem);
+    font-weight: 820;
+    line-height: 1.2;
+    letter-spacing: 0;
   }
 
   h3 {
-    margin: 1.35rem 0 0.55rem;
+    margin: 1.6rem 0 0.65rem;
     color: ${({ $theme }) => $theme.primaryTextColor};
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: clamp(1.2rem, 2vw, 1.45rem);
+    font-weight: 780;
   }
 
   p {
-    margin: 0 0 1rem;
+    margin: 0 0 1.2rem;
   }
 
   ul {
-    margin: 0 0 1rem;
-    padding-left: 1.25rem;
+    margin: 0 0 1.25rem;
+    padding-left: 1.35rem;
   }
 
   ol {
-    margin: 0 0 1rem;
-    padding-left: 1.25rem;
+    margin: 0 0 1.25rem;
+    padding-left: 1.35rem;
   }
 
   li {
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.55rem;
   }
 
   a {
@@ -191,10 +248,10 @@ const MarkdownBody = styled.div<{ $theme: Theme }>`
   img {
     width: 100%;
     max-width: 100%;
-    border-radius: 18px;
+    border-radius: 8px;
     border: 1px solid ${({ $theme }) => $theme.cardBorder};
     display: block;
-    margin: 0 0 1rem;
+    margin: 0 0 clamp(1.25rem, 3vw, 2rem);
   }
 
   table {
@@ -226,10 +283,10 @@ const MarkdownBody = styled.div<{ $theme: Theme }>`
   }
 
   pre {
-    margin: 0 0 1.25rem;
-    padding: 1rem;
+    margin: 0 0 1.45rem;
+    padding: 1.05rem;
     overflow-x: auto;
-    border-radius: 16px;
+    border-radius: 8px;
     background: ${({ $theme }) => $theme.iconGlassBackground};
     border: 1px solid ${({ $theme }) => $theme.cardBorder};
 
@@ -289,31 +346,32 @@ const resolveMarkdownCandidates = (path: string): string[] => {
 };
 
 const Engagement = styled.section<{ $theme: Theme }>`
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  max-width: 58rem;
+  margin-top: clamp(2rem, 4vw, 3rem);
+  padding-top: clamp(1.5rem, 3vw, 2rem);
   border-top: 1px solid ${({ $theme }) => $theme.gridColor};
 `;
 
 const EngagementRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
+  gap: 0.75rem;
   align-items: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.4rem;
 `;
 
 const LikeButton = styled.button<{ $theme: Theme }>`
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.55rem 1rem;
+  padding: 0.7rem 1.05rem;
   border: 1px solid ${({ $theme }) => $theme.cardBorder};
   border-radius: 999px;
   background: ${({ $theme }) => $theme.spotlightColor};
   color: ${({ $theme }) => $theme.accentColor};
   cursor: pointer;
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 0.95rem;
   font-weight: 700;
   transition:
     transform 0.15s ease,
@@ -335,9 +393,9 @@ const LikeButton = styled.button<{ $theme: Theme }>`
 `;
 
 const CommentHeading = styled.h2<{ $theme: Theme }>`
-  margin: 0 0 0.85rem;
-  font-size: 1.05rem;
-  font-weight: 740;
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 800;
   color: ${({ $theme }) => $theme.primaryTextColor};
 `;
 
@@ -355,13 +413,13 @@ const CommentForm = styled.form`
 const CommentInput = styled.input<{ $theme: Theme }>`
   flex: 1;
   min-width: 0;
-  padding: 0.75rem 1rem;
+  padding: 0.9rem 1rem;
   border: 1px solid ${({ $theme }) => $theme.cardBorder};
-  border-radius: 16px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.6);
   color: ${({ $theme }) => $theme.primaryTextColor};
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 
   &::placeholder {
     color: ${({ $theme }) => $theme.tertiaryTextColor};
@@ -369,9 +427,9 @@ const CommentInput = styled.input<{ $theme: Theme }>`
 `;
 
 const CommentSubmit = styled.button<{ $theme: Theme }>`
-  padding: 0.75rem 1.1rem;
+  padding: 0.9rem 1.15rem;
   border: 1px solid ${({ $theme }) => $theme.primaryTextColor};
-  border-radius: 16px;
+  border-radius: 8px;
   background: ${({ $theme }) => $theme.primaryTextColor};
   color: ${({ $theme }) => $theme.cardBackground};
   cursor: pointer;
@@ -391,11 +449,11 @@ const CommentList = styled.ul<{ $theme: Theme }>`
 `;
 
 const CommentItem = styled.li<{ $theme: Theme }>`
-  padding: 0.85rem 0;
+  padding: 1rem 0;
   border-bottom: 1px solid ${({ $theme }) => $theme.gridColor};
   color: ${({ $theme }) => $theme.secondaryTextColor};
-  font-size: 0.92rem;
-  line-height: 1.6;
+  font-size: 0.98rem;
+  line-height: 1.7;
 
   &:last-child {
     border-bottom: none;
@@ -404,20 +462,20 @@ const CommentItem = styled.li<{ $theme: Theme }>`
 
 const CommentTime = styled.span<{ $theme: Theme }>`
   display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.72rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.78rem;
   color: ${({ $theme }) => $theme.tertiaryTextColor};
 `;
 
 const Muted = styled.p<{ $theme: Theme }>`
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.92rem;
   color: ${({ $theme }) => $theme.tertiaryTextColor};
 `;
 
 const ErrorText = styled.p`
   margin: 0 0 0.75rem;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: #f87171;
 `;
 
@@ -601,11 +659,14 @@ const BlogArticlePanel = ({ post }: { post: BlogPost }) => {
 
   return (
     <Article $theme={theme}>
-      <PostMeta $theme={theme}>
-        <span>{post.meta}</span>
-        <span>{formatDate(post.publishedAt)}</span>
-      </PostMeta>
-      <ArticleTitle $theme={theme}>{post.title}</ArticleTitle>
+      <ArticleHeader $theme={theme}>
+        <PostMeta $theme={theme}>
+          <span>{post.meta}</span>
+          <span>{formatDate(post.publishedAt)}</span>
+        </PostMeta>
+        <ArticleTitle $theme={theme}>{post.title}</ArticleTitle>
+        <ThemeBand $theme={theme}>{post.theme}</ThemeBand>
+      </ArticleHeader>
       <MarkdownBody $theme={theme}>
         {markdownError ? <ErrorText>{markdownError}</ErrorText> : null}
         {markdownLoading ? (
@@ -732,8 +793,9 @@ export const BlogRoom = () => {
   return (
     <Page data-page-root data-v2="blog-room">
       <RoomHeader $theme={theme}>
-        <Eyebrow $theme={theme}>Blog / Notes</Eyebrow>
+        <Eyebrow $theme={theme}>Blog / Field Notes</Eyebrow>
         <Title $theme={theme}>博客</Title>
+        <ThemeBand $theme={theme}>当前文章：如何做一个个人网站</ThemeBand>
       </RoomHeader>
       <Stack aria-label="博客列表">
         {blogPosts.map((post) => (
@@ -746,12 +808,16 @@ export const BlogRoom = () => {
               setActivePostId(post.id);
             }}
           >
-            <PostMeta $theme={theme}>
-              <span>{post.meta}</span>
-              <span>{formatDate(post.publishedAt)}</span>
-            </PostMeta>
-            <PostTitle $theme={theme}>{post.title}</PostTitle>
-            <Excerpt $theme={theme}>{post.excerpt}</Excerpt>
+            <div>
+              <PostMeta $theme={theme}>
+                <span>{post.meta}</span>
+                <span>{formatDate(post.publishedAt)}</span>
+              </PostMeta>
+              <ThemeLine $theme={theme}>{post.theme}</ThemeLine>
+              <PostTitle $theme={theme}>{post.title}</PostTitle>
+              <Excerpt $theme={theme}>{post.excerpt}</Excerpt>
+            </div>
+            <ReadMore $theme={theme}>阅读文章</ReadMore>
           </PostLink>
         ))}
       </Stack>

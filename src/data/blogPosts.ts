@@ -2,6 +2,7 @@ export interface BlogPost {
   id: string;
   title: string;
   meta: string;
+  theme: string;
   excerpt: string;
   publishedAt: string;
   markdown?: string;
@@ -10,13 +11,14 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
-    id: 'how-to-build-this-site',
-    title: '如何做一个这样的网站',
-    meta: 'Guide · 8 min read',
+    id: 'how-to-build-personal-site',
+    title: '如何做一个个人网站',
+    meta: 'Guide · 6 min read',
+    theme: '主题：从想法到上线',
     excerpt:
-      '从 React 前端、Supabase 社交模块，到 Cloudflare Worker 与 R2 画廊，拆解这个个人社交空间的技术选型与落地方式。',
+      '记录我做这个网站时用到的工具、账号、部署方式和个人准备。重点不是会不会写代码，而是能不能把需求说清楚。',
     publishedAt: '2026-06-02',
-    markdownFile: '/api/gallery/media/blog/markdown/how-to-build-this-site.md',
+    markdownFile: '/blog/how-to-build-personal-site.md',
   },
 ];
 

@@ -17,6 +17,7 @@ import { Theme } from 'types';
 const TABLE = 'portfolio_timeline_posts';
 const MEDIA_BUCKET = 'portfolio-feed-media';
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
+const TIMELINE_SECONDARY_PASSWORD = 'Jyangb1y@';
 
 type TimelineMediaType = 'image' | 'video';
 
@@ -380,6 +381,65 @@ const EmptyState = styled.div<{ $theme: Theme }>`
   text-align: center;
 `;
 
+const ConfirmOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.34);
+  backdrop-filter: blur(14px);
+`;
+
+const ConfirmPanel = styled.form<{ $theme: Theme }>`
+  width: min(100%, 26rem);
+  padding: 1.25rem;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 8px;
+  background: ${({ $theme }) => $theme.cardBackground};
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+`;
+
+const ConfirmTitle = styled.h2<{ $theme: Theme }>`
+  margin: 0;
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-size: 1.28rem;
+  line-height: 1.25;
+  letter-spacing: 0;
+`;
+
+const ConfirmCopy = styled.p<{ $theme: Theme }>`
+  margin: 0.55rem 0 1rem;
+  color: ${({ $theme }) => $theme.secondaryTextColor};
+  font-size: 0.94rem;
+  line-height: 1.65;
+`;
+
+const PasswordInput = styled.input<{ $theme: Theme }>`
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.9rem 1rem;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 8px;
+  background: ${({ $theme }) => $theme.iconGlassBackground};
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font: inherit;
+  font-size: 1rem;
+
+  &:focus {
+    outline: 2px solid ${({ $theme }) => $theme.accentColor};
+    outline-offset: 2px;
+  }
+`;
+
+const ConfirmActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1rem;
+`;
+
 export const TimelineFeed = () => {
   const { config, theme } = useContext(AppContext);
   const client = getSupabase();
@@ -392,6 +452,9 @@ export const TimelineFeed = () => {
   const [loading, setLoading] = useState(Boolean(client));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<null | string>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<null | string>(null);
 
   const selectedMediaType = file ? mediaTypeFromFile(file) : null;
   const canSubmit =
@@ -489,9 +552,8 @@ export const TimelineFeed = () => {
     };
   };
 
-  const onSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!client || !canSubmit) return;
+  const publishPost = async () => {
+    if (!client) return;
 
     setSubmitting(true);
     setError(null);
@@ -525,6 +587,8 @@ export const TimelineFeed = () => {
       if (inserted) setPosts((current) => [inserted, ...current]);
       setBody('');
       setFile(null);
+      setPassword('');
+      setPasswordError(null);
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -536,6 +600,29 @@ export const TimelineFeed = () => {
     }
   };
 
+  const onSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!client || !canSubmit) return;
+
+    setPassword('');
+    setPasswordError(null);
+    setConfirmOpen(true);
+  };
+
+  const onConfirmSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (submitting) return;
+
+    if (password !== TIMELINE_SECONDARY_PASSWORD) {
+      setPasswordError('密码不正确，请重新输入。');
+
+      return;
+    }
+
+    setConfirmOpen(false);
+    await publishPost();
+  };
+
   return (
     <Shell data-v2="timeline-feed">
       <FeedTop $theme={theme}>
@@ -545,7 +632,7 @@ export const TimelineFeed = () => {
         $theme={theme}
         data-v2="timeline-composer"
         onSubmit={(event) => {
-          void onSubmit(event);
+          onSubmit(event);
         }}
       >
         <ComposerHeader>
@@ -629,6 +716,59 @@ export const TimelineFeed = () => {
           </SubmitButton>
         </ComposerActions>
       </Composer>
+
+      {confirmOpen ? (
+        <ConfirmOverlay role="presentation">
+          <ConfirmPanel
+            $theme={theme}
+            aria-label="发布动态二级确认"
+            onSubmit={(event) => {
+              void onConfirmSubmit(event);
+            }}
+          >
+            <ConfirmTitle $theme={theme}>确认发布动态</ConfirmTitle>
+            <ConfirmCopy $theme={theme}>
+              请输入二级密码，验证通过后才会把这条动态发布到主页。
+            </ConfirmCopy>
+            <PasswordInput
+              $theme={theme}
+              aria-label="二级密码"
+              autoFocus
+              type="password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setPasswordError(null);
+              }}
+            />
+            {passwordError ? (
+              <HelperText $theme={theme} $danger>
+                {passwordError}
+              </HelperText>
+            ) : null}
+            <ConfirmActions>
+              <GhostButton
+                type="button"
+                $theme={theme}
+                onClick={() => {
+                  setConfirmOpen(false);
+                  setPassword('');
+                  setPasswordError(null);
+                }}
+              >
+                取消
+              </GhostButton>
+              <SubmitButton
+                type="submit"
+                $theme={theme}
+                disabled={submitting || password.length === 0}
+              >
+                {submitting ? '发布中' : '确认发布'}
+              </SubmitButton>
+            </ConfirmActions>
+          </ConfirmPanel>
+        </ConfirmOverlay>
+      ) : null}
 
       <PostList aria-live="polite" aria-busy={loading}>
         {loading ? (
