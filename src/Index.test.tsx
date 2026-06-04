@@ -16,6 +16,16 @@ import { themes } from 'appearance';
 import { Footer } from 'components';
 import { HomeNavIcon } from 'icons/nav';
 
+jest.mock('react-globe.gl', () => {
+  const React = jest.requireActual<typeof import('react')>('react');
+
+  return {
+    __esModule: true,
+    default: () =>
+      React.createElement('canvas', { 'data-v2': 'mock-travel-globe-canvas' }),
+  };
+});
+
 configure({ testIdAttribute: 'data-v2' });
 
 const mockState = {
@@ -64,13 +74,12 @@ describe('application tests', () => {
     expect(screen.getByTestId('timeline-composer')).toBeVisible();
   });
 
-  it('should render external links in profile', () => {
+  it('should render travel map in profile', () => {
     fireEvent.click(screen.getByTestId('nav-profile'));
 
-    expect(screen.getByTestId('profile-github')).toBeVisible();
-    expect(screen.getByTestId('profile-linkedin')).toBeVisible();
-    expect(screen.getByTestId('profile-resume')).toBeVisible();
-    expect(screen.getByTestId('profile-email')).toBeVisible();
+    expect(screen.getByTestId('travel-map-room')).toBeVisible();
+    expect(screen.getByTestId('travel-globe-stage')).toBeVisible();
+    expect(screen.getByTestId('mock-travel-globe-canvas')).toBeVisible();
   });
 
   it('should switch to guestbook from sidebar', () => {

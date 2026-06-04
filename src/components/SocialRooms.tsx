@@ -6,6 +6,8 @@ import { AppContext } from 'App/AppContext';
 import { getSupabase } from 'lib/supabaseClient';
 import { Theme } from 'types';
 
+import { TravelMapRoom } from './TravelMapRoom';
+
 const ASK_TABLE = 'portfolio_anonymous_questions';
 
 interface AnonymousQuestionRow {
@@ -73,6 +75,7 @@ interface FunItem {
 const FUN_COVER_ASPECT = 1024 / 629;
 
 const funCoverUrl = `${process.env.PUBLIC_URL ?? ''}/fun/black-and-white-cover.png`;
+const idealTypeCoverUrl = `${process.env.PUBLIC_URL ?? ''}/fun/ideal-type-cover.jpg`;
 
 const funItems: FunItem[] = [
   {
@@ -85,6 +88,140 @@ const funItems: FunItem[] = [
     coverImage: funCoverUrl,
   },
 ];
+
+type IdealTypeAxis = 'attention' | 'care' | 'energy' | 'pace';
+type IdealTypeCode = 'A' | 'D' | 'F' | 'L' | 'P' | 'S' | 'T' | 'W';
+
+interface IdealTypeOption {
+  axis: IdealTypeAxis;
+  code: IdealTypeCode;
+  description: string;
+  label: string;
+  score: number;
+}
+
+interface IdealTypeQuestion {
+  id: string;
+  options: IdealTypeOption[];
+  prompt: string;
+}
+
+const idealTypeQuestions: IdealTypeQuestion[] = [
+  {
+    id: 'pace',
+    prompt: '刚认识时，你更舒服的相处方式是？',
+    options: [
+      {
+        axis: 'energy',
+        code: 'W',
+        description: '先观察、慢慢熟，熟了以后再变得很有话说。',
+        label: '慢慢靠近',
+        score: 5,
+      },
+      {
+        axis: 'energy',
+        code: 'S',
+        description: '一开始就能抛梗接梗，聊天像打乒乓球。',
+        label: '快速来电',
+        score: 4,
+      },
+    ],
+  },
+  {
+    id: 'date',
+    prompt: '如果一起空出一个下午，你更想要？',
+    options: [
+      {
+        axis: 'attention',
+        code: 'D',
+        description: '散步、咖啡、拍照，重点是把细节记下来。',
+        label: '细节型约会',
+        score: 5,
+      },
+      {
+        axis: 'attention',
+        code: 'A',
+        description: '临时决定路线，去一个没去过的地方。',
+        label: '冒险型约会',
+        score: 3,
+      },
+    ],
+  },
+  {
+    id: 'care',
+    prompt: '你表达喜欢时更接近哪一种？',
+    options: [
+      {
+        axis: 'care',
+        code: 'F',
+        description: '会先接住情绪，再一起想下一步怎么办。',
+        label: '先共情',
+        score: 5,
+      },
+      {
+        axis: 'care',
+        code: 'T',
+        description: '会认真分析问题，用行动把事情处理掉。',
+        label: '先解决',
+        score: 4,
+      },
+    ],
+  },
+  {
+    id: 'rhythm',
+    prompt: '关系里的日常节奏，你更喜欢？',
+    options: [
+      {
+        axis: 'pace',
+        code: 'P',
+        description: '有一点计划感，重要的事提前说清楚。',
+        label: '稳定计划',
+        score: 4,
+      },
+      {
+        axis: 'pace',
+        code: 'L',
+        description: '保留很多即兴空间，想到什么就一起去做。',
+        label: '松弛随性',
+        score: 5,
+      },
+    ],
+  },
+];
+
+const defaultIdealTypeCodes: Record<IdealTypeAxis, IdealTypeCode> = {
+  attention: 'D',
+  care: 'F',
+  energy: 'W',
+  pace: 'L',
+};
+
+const idealTypeLabels: Record<IdealTypeCode, string> = {
+  A: '冒险',
+  D: '细节',
+  F: '共情',
+  L: '松弛',
+  P: '稳定',
+  S: '火花',
+  T: '解决',
+  W: '慢热',
+};
+
+const idealResultName = (code: string) => {
+  if (code.includes('W') && code.includes('D') && code.includes('F')) {
+    return '温柔细节型';
+  }
+
+  if (code.includes('S') && code.includes('A')) {
+    return '火花冒险型';
+  }
+
+  if (code.includes('P') && code.includes('T')) {
+    return '稳定行动型';
+  }
+
+  return '混合观察型';
+};
 
 const Page = styled.main`
   position: relative;
@@ -175,13 +312,15 @@ const FunList = styled.div`
   margin-top: 1rem;
 `;
 
-const FunHeroCard = styled.a<{ $cover: string; $theme: Theme }>`
+const funHeroSurface = css<{ $cover: string; $theme: Theme }>`
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   width: 100%;
+  min-width: 0;
   aspect-ratio: ${FUN_COVER_ASPECT};
+  box-sizing: border-box;
   overflow: hidden;
   padding: clamp(1.25rem, 4vw, 2rem);
   border: 1px solid ${({ $theme }) => $theme.cardBorder};
@@ -211,6 +350,18 @@ const FunHeroCard = styled.a<{ $cover: string; $theme: Theme }>`
     outline: 2px solid ${({ $theme }) => $theme.accentColor};
     outline-offset: 3px;
   }
+`;
+
+const FunHeroCard = styled.a<{ $cover: string; $theme: Theme }>`
+  ${funHeroSurface}
+  text-decoration: none;
+`;
+
+const FunHeroButton = styled.button<{ $cover: string; $theme: Theme }>`
+  ${funHeroSurface}
+  appearance: none;
+  font: inherit;
+  text-align: left;
 `;
 
 const FunHeroMeta = styled.div`
@@ -251,6 +402,185 @@ const FunHeroBody = styled.p`
   font-size: clamp(0.88rem, 2.2vw, 1rem);
   line-height: 1.65;
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
+`;
+
+const IdealTest = styled.section<{ $theme: Theme }>`
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(14rem, 0.85fr);
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 1.25rem);
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 16px;
+  background: ${({ $theme }) => $theme.cardBackground};
+  box-shadow: ${({ $theme }) => $theme.glassShadow};
+
+  @media (width <= 760px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const QuizColumn = styled.div`
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+`;
+
+const QuizHeader = styled.header`
+  display: grid;
+  gap: 0.45rem;
+`;
+
+const QuizTitle = styled.h2<{ $theme: Theme }>`
+  margin: 0;
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-size: clamp(1.18rem, 3.5vw, 1.55rem);
+  font-weight: 820;
+  line-height: 1.15;
+  letter-spacing: 0;
+`;
+
+const QuizDeck = styled.div`
+  display: grid;
+  gap: 0.9rem;
+`;
+
+const QuizQuestion = styled.fieldset<{ $theme: Theme }>`
+  display: grid;
+  gap: 0.62rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 0.9rem;
+  border: 0;
+  border-bottom: 1px solid ${({ $theme }) => $theme.gridColor};
+
+  &:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+`;
+
+const QuestionPrompt = styled.legend<{ $theme: Theme }>`
+  margin: 0;
+  padding: 0;
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-size: 0.92rem;
+  font-weight: 760;
+  line-height: 1.45;
+`;
+
+const OptionGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+
+  @media (width <= 620px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const OptionButton = styled.button<{ $active: boolean; $theme: Theme }>`
+  min-width: 0;
+  min-height: 2.65rem;
+  padding: 0.58rem 0.62rem;
+  border: 1px solid
+    ${({ $active, $theme }) =>
+      $active ? $theme.primaryTextColor : $theme.cardBorder};
+  border-radius: 8px;
+  background: ${({ $active, $theme }) =>
+    $active ? $theme.primaryTextColor : $theme.iconGlassBackground};
+  color: ${({ $active, $theme }) =>
+    $active ? $theme.cardBackground : $theme.secondaryTextColor};
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 720;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: ${({ $theme }) => $theme.cardHoverBorder};
+  }
+`;
+
+const ResultPanel = styled.aside<{ $theme: Theme }>`
+  display: grid;
+  align-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  padding: 0.95rem;
+  border-radius: 8px;
+  background: ${({ $theme }) => $theme.iconGlassBackground};
+`;
+
+const ScoreRing = styled.div<{ $score: number; $theme: Theme }>`
+  display: grid;
+  place-items: center;
+  width: min(9.5rem, 100%);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at center,
+      ${({ $theme }) => $theme.cardBackground} 0 57%,
+      transparent 58%
+    ),
+    conic-gradient(
+      ${({ $theme }) => $theme.primaryTextColor} ${({ $score }) => $score}%,
+      ${({ $theme }) => $theme.gridColor} 0
+    );
+`;
+
+const ScoreNumber = styled.strong<{ $theme: Theme }>`
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-size: clamp(1.85rem, 6vw, 2.45rem);
+  font-weight: 860;
+  line-height: 1;
+`;
+
+const ResultCopy = styled.div`
+  display: grid;
+  gap: 0.45rem;
+`;
+
+const ResultTitle = styled.h3<{ $theme: Theme }>`
+  margin: 0;
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-size: 1rem;
+  font-weight: 820;
+  line-height: 1.3;
+`;
+
+const ResultText = styled.p<{ $theme: Theme }>`
+  margin: 0;
+  color: ${({ $theme }) => $theme.secondaryTextColor};
+  font-size: 0.86rem;
+  line-height: 1.65;
+`;
+
+const ResetButton = styled.button<{ $theme: Theme }>`
+  justify-self: start;
+  min-height: 2.35rem;
+  padding: 0.52rem 0.78rem;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 8px;
+  background: ${({ $theme }) => $theme.glassBackground};
+  color: ${({ $theme }) => $theme.secondaryTextColor};
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 740;
+
+  &:hover {
+    border-color: ${({ $theme }) => $theme.cardHoverBorder};
+    color: ${({ $theme }) => $theme.primaryTextColor};
+  }
 `;
 
 const PostMeta = styled.div<{ $theme: Theme }>`
@@ -318,8 +648,15 @@ const Reaction = styled.button<{ $theme: Theme }>`
   }
 `;
 
-const ProfilePanel = styled(Card)`
-  min-height: 14rem;
+const ProfileDetails = styled.section`
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(16rem, 0.9fr);
+  gap: 0.85rem;
+  margin-top: 0.85rem;
+
+  @media (width <= 760px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const TagCloud = styled.div`
@@ -628,53 +965,43 @@ export const ProfileRoom = () => {
   const hobbies = ['摄影', '画画', '游泳', '骑行', '散步', 'Vibe Coding'];
 
   return (
-    <Page data-page-root data-v2="profile-room">
-      <RoomHeader $kind="profile" $theme={theme}>
-        <Eyebrow $theme={theme}>Profile / Identity</Eyebrow>
-        <Title $theme={theme}>Amateur In Everything</Title>
-      </RoomHeader>
-      <Grid>
-        <ProfilePanel $theme={theme}>
-          <PostMeta $theme={theme}>{config.name.display}</PostMeta>
-          <CardTitle $theme={theme}>个人身份</CardTitle>
-        </ProfilePanel>
-        <Stack>
-          <Card $theme={theme}>
-            <PostMeta $theme={theme}>联系</PostMeta>
-            <ContactGrid>
-              {config.dockItems.map(
-                ({ ariaLabel, display, href, icon, name }) => (
-                  <ContactLink
-                    key={name}
-                    data-v2={`profile-${name}`}
-                    $theme={theme}
-                    href={href}
-                    aria-label={`${display}，${ariaLabel}`}
-                    rel="noopener noreferrer"
-                    target={
-                      href.startsWith('mailto:') || href === '#'
-                        ? undefined
-                        : '_blank'
-                    }
-                  >
-                    {icon}
-                    <span>{display}</span>
-                  </ContactLink>
-                ),
-              )}
-            </ContactGrid>
-          </Card>
-          <Card $theme={theme}>
-            <PostMeta $theme={theme}>业余爱好</PostMeta>
-            <TagCloud>
-              {hobbies.map((tag) => (
-                <MoodBadge key={tag}>{tag}</MoodBadge>
-              ))}
-            </TagCloud>
-          </Card>
-        </Stack>
-      </Grid>
-    </Page>
+    <TravelMapRoom>
+      <ProfileDetails>
+        <Card $theme={theme}>
+          <PostMeta $theme={theme}>联系</PostMeta>
+          <ContactGrid>
+            {config.dockItems.map(
+              ({ ariaLabel, display, href, icon, name }) => (
+                <ContactLink
+                  key={name}
+                  data-v2={`profile-${name}`}
+                  $theme={theme}
+                  href={href}
+                  aria-label={`${display}，${ariaLabel}`}
+                  rel="noopener noreferrer"
+                  target={
+                    href.startsWith('mailto:') || href === '#'
+                      ? undefined
+                      : '_blank'
+                  }
+                >
+                  {icon}
+                  <span>{display}</span>
+                </ContactLink>
+              ),
+            )}
+          </ContactGrid>
+        </Card>
+        <Card $theme={theme}>
+          <PostMeta $theme={theme}>业余爱好</PostMeta>
+          <TagCloud>
+            {hobbies.map((tag) => (
+              <MoodBadge key={tag}>{tag}</MoodBadge>
+            ))}
+          </TagCloud>
+        </Card>
+      </ProfileDetails>
+    </TravelMapRoom>
   );
 };
 
@@ -743,8 +1070,148 @@ export const AskRoom = () => {
   );
 };
 
+export const IdealTypeTestRoom = () => {
+  const { setActiveView, theme } = useContext(AppContext);
+  const [idealAnswers, setIdealAnswers] = useState<
+    Record<string, IdealTypeOption>
+  >({});
+  const answeredCount = Object.keys(idealAnswers).length;
+  const selectedOptions = Object.values(idealAnswers);
+  const maxScore = idealTypeQuestions.length * 5;
+  const rawScore = selectedOptions.reduce(
+    (sum, option) => sum + option.score,
+    0,
+  );
+  const matchScore =
+    answeredCount === 0 ? 0 : Math.round((rawScore / maxScore) * 100);
+  const typeByAxis = selectedOptions.reduce<
+    Record<IdealTypeAxis, IdealTypeCode>
+  >(
+    (current, option) => ({
+      ...current,
+      [option.axis]: option.code,
+    }),
+    defaultIdealTypeCodes,
+  );
+  const typeCode = [
+    typeByAxis.energy,
+    typeByAxis.attention,
+    typeByAxis.care,
+    typeByAxis.pace,
+  ].join('');
+  const resultTitle =
+    answeredCount < idealTypeQuestions.length
+      ? '等待作答'
+      : `${typeCode} · ${idealResultName(typeCode)}`;
+  const resultText =
+    answeredCount < idealTypeQuestions.length
+      ? '像 MBTI 一样，每题会落到一个维度。题目还可以继续换，结构先搭好。'
+      : matchScore >= 86
+        ? '这个结果偏向：节奏舒服、细节感强、会认真接住对方。'
+        : matchScore >= 70
+          ? '这个结果有一些合拍信号，但还需要更具体的题目拉开差异。'
+          : '这个结果先保留观察，后面可以加反向题和权重题。';
+  const keywords = [
+    idealTypeLabels[typeByAxis.energy],
+    idealTypeLabels[typeByAxis.attention],
+    idealTypeLabels[typeByAxis.care],
+    idealTypeLabels[typeByAxis.pace],
+  ];
+
+  return (
+    <Page data-page-root data-v2="ideal-type-test-room">
+      <RoomHeader $kind="fun" $theme={theme}>
+        <Eyebrow $theme={theme}>Toy / Personality Test</Eyebrow>
+        <Title $theme={theme}>测测你会是我的理想型吗</Title>
+      </RoomHeader>
+      <FunList>
+        <IdealTest $theme={theme} data-v2="ideal-type-demo">
+          <QuizColumn>
+            <QuizHeader>
+              <PostMeta $theme={theme}>
+                <MoodBadge>MBTI-like</MoodBadge>
+                <span>
+                  {answeredCount}/{idealTypeQuestions.length} 已选择
+                </span>
+              </PostMeta>
+              <QuizTitle $theme={theme}>先用四个维度搭一个雏形</QuizTitle>
+              <Muted $theme={theme}>
+                每题二选一，最后组合成一个类型码。后续可以把题目换成更私人、更好玩的版本。
+              </Muted>
+            </QuizHeader>
+            <QuizDeck>
+              {idealTypeQuestions.map((question, index) => (
+                <QuizQuestion key={question.id} $theme={theme}>
+                  <QuestionPrompt $theme={theme}>
+                    {index + 1}. {question.prompt}
+                  </QuestionPrompt>
+                  <OptionGrid>
+                    {question.options.map((option) => (
+                      <OptionButton
+                        key={option.label}
+                        type="button"
+                        $active={
+                          idealAnswers[question.id]?.code === option.code
+                        }
+                        $theme={theme}
+                        aria-pressed={
+                          idealAnswers[question.id]?.code === option.code
+                        }
+                        onClick={() => {
+                          setIdealAnswers((current) => ({
+                            ...current,
+                            [question.id]: option,
+                          }));
+                        }}
+                      >
+                        {option.label}
+                        <br />
+                        <small>{option.description}</small>
+                      </OptionButton>
+                    ))}
+                  </OptionGrid>
+                </QuizQuestion>
+              ))}
+            </QuizDeck>
+          </QuizColumn>
+          <ResultPanel $theme={theme}>
+            <ScoreRing $score={matchScore} $theme={theme}>
+              <ScoreNumber $theme={theme}>{matchScore}</ScoreNumber>
+            </ScoreRing>
+            <ResultCopy>
+              <ResultTitle $theme={theme}>{resultTitle}</ResultTitle>
+              <ResultText $theme={theme}>{resultText}</ResultText>
+              <Muted $theme={theme}>
+                {keywords.map((keyword) => `#${keyword}`).join(' ')}
+              </Muted>
+            </ResultCopy>
+            <ResetButton
+              type="button"
+              $theme={theme}
+              onClick={() => {
+                setIdealAnswers({});
+              }}
+            >
+              重新选择
+            </ResetButton>
+            <ResetButton
+              type="button"
+              $theme={theme}
+              onClick={() => {
+                setActiveView('fun');
+              }}
+            >
+              返回玩具
+            </ResetButton>
+          </ResultPanel>
+        </IdealTest>
+      </FunList>
+    </Page>
+  );
+};
+
 export const FunRoom = () => {
-  const { theme } = useContext(AppContext);
+  const { setActiveView, theme } = useContext(AppContext);
 
   return (
     <Page data-page-root data-v2="fun-room">
@@ -765,12 +1232,31 @@ export const FunRoom = () => {
           >
             <FunHeroMeta>
               <FunHeroPill>{item.tag}</FunHeroPill>
-              <span>点击打开 ↗</span>
+              <span>点击打开 →</span>
             </FunHeroMeta>
             <FunHeroTitle>{item.title}</FunHeroTitle>
             <FunHeroBody>{item.description}</FunHeroBody>
           </FunHeroCard>
         ))}
+        <FunHeroButton
+          type="button"
+          $cover={idealTypeCoverUrl}
+          $theme={theme}
+          aria-label="打开理想型测试 demo"
+          onClick={() => {
+            setActiveView('ideal-test');
+          }}
+        >
+          <FunHeroMeta>
+            <FunHeroPill>Personality Test</FunHeroPill>
+            <span>打开测试 →</span>
+          </FunHeroMeta>
+          <FunHeroTitle>测测你会是我的理想型吗</FunHeroTitle>
+          <FunHeroBody>
+            一个参考 MBTI 结构的小测试入口。现在是
+            demo，等你想好题目后再替换成正式版。
+          </FunHeroBody>
+        </FunHeroButton>
       </FunList>
     </Page>
   );

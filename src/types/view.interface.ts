@@ -5,5 +5,6 @@ export type AppView =
   | 'gallery'
   | 'guestbook'
   | 'home'
+  | 'ideal-test'
   | 'likes'
   | 'profile';

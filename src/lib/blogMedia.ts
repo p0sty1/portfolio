@@ -35,7 +35,7 @@ export const resolveBlogMediaUrl = (src?: string): string => {
       typeof window !== 'undefined' &&
       window.location.hostname === 'localhost'
     ) {
-      return `https://jyangb1y.site${galleryApiBase()}/media/${key}`;
+      return `https://jyangb1y.com${galleryApiBase()}/media/${key}`;
     }
 
     return resolved;

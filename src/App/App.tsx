@@ -9,6 +9,7 @@ import {
   Gallery,
   Guestbook,
   HomeScreen,
+  IdealTypeTestRoom,
   Likes,
   MobileHeader,
   MobileNav,
@@ -76,6 +77,17 @@ const AppViews = () => {
     return (
       <div className="app-view app-view-fun" aria-label="Fun">
         <FunRoom />
+      </div>
+    );
+  }
+
+  if (activeView === 'ideal-test') {
+    return (
+      <div
+        className="app-view app-view-ideal-test"
+        aria-label="Ideal Type Test"
+      >
+        <IdealTypeTestRoom />
       </div>
     );
   }

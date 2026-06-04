@@ -14,3 +14,4 @@ export * from './ProfileWidget';
 export * from './Sidebar';
 export * from './SocialRooms';
 export * from './TimelineFeed';
+export * from './TravelMapRoom';

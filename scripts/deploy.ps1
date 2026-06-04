@@ -32,4 +32,4 @@ npm run build
 Write-Host "Deploying to Cloudflare Worker portfolio..."
 npx wrangler deploy
 
-Write-Host "Done. Open https://jyangb1y.site and hard-refresh (Ctrl+F5)."
+Write-Host "Done. Open https://jyangb1y.com and hard-refresh (Ctrl+F5)."
