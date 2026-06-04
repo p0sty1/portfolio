@@ -15,9 +15,11 @@ import { getSupabase } from 'lib/supabaseClient';
 import { Theme } from 'types';
 
 const TABLE = 'portfolio_timeline_posts';
+const COMMENTS_TABLE = 'portfolio_timeline_comments';
 const MEDIA_BUCKET = 'portfolio-feed-media';
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
 const TIMELINE_SECONDARY_PASSWORD = 'Jyangb1y@';
+const TIMELINE_CLIENT_ID_STORAGE = 'portfolio-timeline-client-id-v1';
 
 type TimelineMediaType = 'image' | 'video';
 
@@ -27,10 +29,49 @@ interface TimelinePostRow {
   media_url: null | string;
   media_type: null | TimelineMediaType;
   created_at: string;
+  likes_count: number;
+  liked_by_client: boolean;
+  comments_count: number;
+}
+
+interface TimelineCommentRow {
+  id: string;
+  post_id: string;
+  parent_id: null | string;
+  author_name: string;
+  body: string;
+  created_at: string;
+}
+
+interface TimelineEngagementRow {
+  post_id: string;
+  likes_count: number;
+  liked_by_client: boolean;
 }
 
 const isTimelineMediaType = (value: unknown): value is TimelineMediaType =>
   value === 'image' || value === 'video';
+
+const makeRandomId = () =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${String(Date.now())}-${Math.random().toString(16).slice(2)}`;
+
+const getTimelineClientId = () => {
+  if (typeof window === 'undefined') return `timeline-${makeRandomId()}`;
+
+  try {
+    const stored = window.localStorage.getItem(TIMELINE_CLIENT_ID_STORAGE);
+    if (stored) return stored;
+
+    const next = `timeline-${makeRandomId()}`;
+    window.localStorage.setItem(TIMELINE_CLIENT_ID_STORAGE, next);
+
+    return next;
+  } catch {
+    return `timeline-${makeRandomId()}`;
+  }
+};
 
 const normalizePosts = (rows: unknown): TimelinePostRow[] => {
   if (!Array.isArray(rows)) return [];
@@ -54,10 +95,132 @@ const normalizePosts = (rows: unknown): TimelinePostRow[] => {
         media_url: typeof mediaUrl === 'string' ? mediaUrl : null,
         media_type: isTimelineMediaType(mediaType) ? mediaType : null,
         created_at: createdAt,
+        likes_count: 0,
+        liked_by_client: false,
+        comments_count: 0,
       },
     ];
   });
 };
+
+const normalizeComments = (rows: unknown): TimelineCommentRow[] => {
+  if (!Array.isArray(rows)) return [];
+
+  return rows.flatMap((row): TimelineCommentRow[] => {
+    if (!row || typeof row !== 'object') return [];
+
+    const record = row as Record<string, unknown>;
+    const id = record.id;
+    const postId = record.post_id;
+    const parentId = record.parent_id;
+    const authorName = record.author_name;
+    const body = record.body;
+    const createdAt = record.created_at;
+
+    if (
+      typeof id !== 'string' ||
+      typeof postId !== 'string' ||
+      typeof body !== 'string' ||
+      typeof createdAt !== 'string'
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        id,
+        post_id: postId,
+        parent_id: typeof parentId === 'string' ? parentId : null,
+        author_name: typeof authorName === 'string' ? authorName : '访客',
+        body,
+        created_at: createdAt,
+      },
+    ];
+  });
+};
+
+const normalizeEngagement = (rows: unknown): TimelineEngagementRow[] => {
+  if (!Array.isArray(rows)) return [];
+
+  return rows.flatMap((row): TimelineEngagementRow[] => {
+    if (!row || typeof row !== 'object') return [];
+
+    const record = row as Record<string, unknown>;
+    const postId = record.post_id;
+    const likesCount = record.likes_count;
+    const likedByClient = record.liked_by_client;
+
+    if (typeof postId !== 'string') return [];
+
+    return [
+      {
+        post_id: postId,
+        likes_count: typeof likesCount === 'number' ? likesCount : 0,
+        liked_by_client:
+          typeof likedByClient === 'boolean' ? likedByClient : false,
+      },
+    ];
+  });
+};
+
+const groupCommentsByPost = (comments: TimelineCommentRow[]) =>
+  comments.reduce<Record<string, TimelineCommentRow[]>>((grouped, comment) => {
+    grouped[comment.post_id] = [...(grouped[comment.post_id] ?? []), comment];
+
+    return grouped;
+  }, {});
+
+const groupRepliesByParent = (comments: TimelineCommentRow[]) =>
+  comments.reduce<{
+    repliesByParent: Record<string, TimelineCommentRow[]>;
+    roots: TimelineCommentRow[];
+  }>(
+    (grouped, comment) => {
+      if (comment.parent_id) {
+        grouped.repliesByParent[comment.parent_id] = [
+          ...(grouped.repliesByParent[comment.parent_id] ?? []),
+          comment,
+        ];
+      } else {
+        grouped.roots.push(comment);
+      }
+
+      return grouped;
+    },
+    { repliesByParent: {}, roots: [] },
+  );
+
+const parseLikeToggle = (
+  data: unknown,
+  fallback: Pick<TimelinePostRow, 'liked_by_client' | 'likes_count'>,
+) => {
+  const row: unknown = Array.isArray(data)
+    ? (data as readonly unknown[])[0]
+    : data;
+
+  if (!row || typeof row !== 'object') {
+    return {
+      liked: !fallback.liked_by_client,
+      likesCount: fallback.likes_count + (fallback.liked_by_client ? -1 : 1),
+    };
+  }
+
+  const record = row as Record<string, unknown>;
+  const liked = record.liked;
+  const likesCount = record.likes_count;
+
+  return {
+    liked: typeof liked === 'boolean' ? liked : !fallback.liked_by_client,
+    likesCount:
+      typeof likesCount === 'number' ? likesCount : fallback.likes_count,
+  };
+};
+
+const withUpdatedPost = (
+  posts: TimelinePostRow[],
+  postId: string,
+  updater: (post: TimelinePostRow) => TimelinePostRow,
+) => posts.map((post) => (post.id === postId ? updater(post) : post));
 
 const formatTime = (iso: string) => {
   try {
@@ -88,17 +251,21 @@ const safeExtension = (file: File, mediaType: TimelineMediaType) => {
 };
 
 const makeMediaPath = (file: File, mediaType: TimelineMediaType) => {
-  const id =
-    typeof crypto !== 'undefined' && 'randomUUID' in crypto
-      ? crypto.randomUUID()
-      : `${String(Date.now())}-${Math.random().toString(16).slice(2)}`;
-
-  return `feed/${id}.${safeExtension(file, mediaType)}`;
+  return `feed/${makeRandomId()}.${safeExtension(file, mediaType)}`;
 };
 
 const friendlySupabaseError = (message: string) => {
   if (message.includes('portfolio_timeline_posts')) {
     return '动态表还没有创建，请先执行 Supabase timeline 迁移。';
+  }
+
+  if (
+    message.includes('portfolio_timeline_comments') ||
+    message.includes('portfolio_timeline_post_likes') ||
+    message.includes('get_timeline_post_engagement') ||
+    message.includes('toggle_timeline_post_like')
+  ) {
+    return '动态互动表还没有创建，请先执行 Supabase timeline engagement 迁移。';
   }
 
   if (message.includes(MEDIA_BUCKET)) {
@@ -372,6 +539,182 @@ const PostFooter = styled.footer<{ $theme: Theme }>`
   font-size: 0.76rem;
 `;
 
+const PostActions = styled.div<{ $theme: Theme }>`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.1rem 1rem 0.85rem;
+  border-bottom: 1px solid ${({ $theme }) => $theme.gridColor};
+`;
+
+const EngagementButton = styled.button<{
+  $active?: boolean;
+  $theme: Theme;
+}>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.36rem;
+  min-height: 2rem;
+  padding: 0.42rem 0.72rem;
+  border: 1px solid
+    ${({ $active, $theme }) =>
+      $active ? $theme.accentColor : $theme.cardBorder};
+  border-radius: 999px;
+  background: ${({ $active, $theme }) =>
+    $active ? $theme.spotlightColor : $theme.iconGlassBackground};
+  color: ${({ $active, $theme }) =>
+    $active ? $theme.accentColor : $theme.secondaryTextColor};
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 760;
+
+  &:hover {
+    border-color: ${({ $theme }) => $theme.cardHoverBorder};
+    color: ${({ $theme }) => $theme.primaryTextColor};
+    background: ${({ $theme }) => $theme.glassBackgroundHover};
+  }
+
+  &:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+  }
+`;
+
+const CommentsPanel = styled.section<{ $theme: Theme }>`
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem 1rem;
+  background: ${({ $theme }) => $theme.cardBackground};
+`;
+
+const CommentForm = styled.form<{ $compact?: boolean }>`
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  margin-top: ${({ $compact }) => ($compact ? '0.55rem' : '0')};
+
+  @media (width <= 520px) {
+    flex-direction: column;
+  }
+`;
+
+const CommentInput = styled.textarea<{ $theme: Theme }>`
+  flex: 1;
+  min-width: 0;
+  min-height: 2.45rem;
+  max-height: 9rem;
+  resize: vertical;
+  box-sizing: border-box;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 8px;
+  background: ${({ $theme }) => $theme.iconGlassBackground};
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font: inherit;
+  font-size: 0.86rem;
+  line-height: 1.5;
+
+  &:focus {
+    outline: 2px solid ${({ $theme }) => $theme.accentColor};
+    outline-offset: 2px;
+  }
+
+  &::placeholder {
+    color: ${({ $theme }) => $theme.tertiaryTextColor};
+  }
+`;
+
+const CommentSubmit = styled.button<{ $theme: Theme }>`
+  flex: 0 0 auto;
+  min-height: 2.45rem;
+  padding: 0.58rem 0.82rem;
+  border: 1px solid ${({ $theme }) => $theme.primaryTextColor};
+  border-radius: 8px;
+  background: ${({ $theme }) => $theme.primaryTextColor};
+  color: ${({ $theme }) => $theme.cardBackground};
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 760;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+`;
+
+const CommentList = styled.ul`
+  display: grid;
+  gap: 0.72rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`;
+
+const CommentItem = styled.li<{ $depth: number; $theme: Theme }>`
+  min-width: 0;
+  margin-left: ${({ $depth }) => ($depth > 0 ? '1.85rem' : '0')};
+  padding-left: ${({ $depth }) => ($depth > 0 ? '0.78rem' : '0')};
+  border-left: ${({ $depth, $theme }) =>
+    $depth > 0 ? `2px solid ${$theme.gridColor}` : '0'};
+`;
+
+const CommentBubble = styled.div<{ $theme: Theme }>`
+  display: grid;
+  gap: 0.26rem;
+  min-width: 0;
+  padding: 0.66rem 0.76rem;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 8px;
+  background: ${({ $theme }) => $theme.iconGlassBackground};
+`;
+
+const CommentMeta = styled.div<{ $theme: Theme }>`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  align-items: center;
+  color: ${({ $theme }) => $theme.tertiaryTextColor};
+  font-size: 0.74rem;
+
+  strong {
+    color: ${({ $theme }) => $theme.primaryTextColor};
+    font-size: 0.78rem;
+  }
+`;
+
+const CommentBody = styled.p<{ $theme: Theme }>`
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: ${({ $theme }) => $theme.secondaryTextColor};
+  font-size: 0.86rem;
+  line-height: 1.58;
+`;
+
+const CommentTools = styled.div`
+  display: flex;
+  gap: 0.42rem;
+  align-items: center;
+`;
+
+const CommentToolButton = styled.button<{ $theme: Theme }>`
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: ${({ $theme }) => $theme.tertiaryTextColor};
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 720;
+
+  &:hover {
+    color: ${({ $theme }) => $theme.primaryTextColor};
+  }
+`;
+
 const EmptyState = styled.div<{ $theme: Theme }>`
   padding: 1.25rem;
   border: 0;
@@ -445,10 +788,27 @@ export const TimelineFeed = () => {
   const client = getSupabase();
   const inputRef = useRef<HTMLInputElement>(null);
   const avatarSrc = config.avatar.src?.trim();
+  const [clientId] = useState(getTimelineClientId);
   const [body, setBody] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<null | string>(null);
   const [posts, setPosts] = useState<TimelinePostRow[]>([]);
+  const [commentsByPost, setCommentsByPost] = useState<
+    Record<string, TimelineCommentRow[]>
+  >({});
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>(
+    {},
+  );
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replyTargets, setReplyTargets] = useState<
+    Record<string, null | string>
+  >({});
+  const [likingPostIds, setLikingPostIds] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [submittingCommentKey, setSubmittingCommentKey] = useState<
+    null | string
+  >(null);
   const [loading, setLoading] = useState(Boolean(client));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<null | string>(null);
@@ -470,22 +830,96 @@ export const TimelineFeed = () => {
     setLoading(true);
     setError(null);
 
-    const { data, error: fetchError } = await client
+    const postsResult = await client
       .from(TABLE)
       .select('id, body, media_url, media_type, created_at')
       .order('created_at', { ascending: false })
       .limit(80);
 
-    setLoading(false);
-
-    if (fetchError) {
-      setError(friendlySupabaseError(fetchError.message));
+    if (postsResult.error) {
+      setLoading(false);
+      setError(friendlySupabaseError(postsResult.error.message));
 
       return;
     }
 
-    setPosts(normalizePosts(data));
-  }, [client]);
+    const basePosts = normalizePosts(postsResult.data);
+    const postIds = basePosts.map((post) => post.id);
+
+    if (postIds.length === 0) {
+      setCommentsByPost({});
+      setPosts([]);
+      setLoading(false);
+
+      return;
+    }
+
+    const [engagementResult, commentsResult] = await Promise.all([
+      client.rpc('get_timeline_post_engagement', {
+        p_client_id: clientId,
+      }),
+      client
+        .from(COMMENTS_TABLE)
+        .select('id, post_id, parent_id, author_name, body, created_at')
+        .in('post_id', postIds)
+        .order('created_at', { ascending: true })
+        .limit(500),
+    ]);
+
+    setLoading(false);
+
+    if (engagementResult.error) {
+      setCommentsByPost({});
+      setPosts(basePosts);
+      setError(friendlySupabaseError(engagementResult.error.message));
+
+      return;
+    }
+
+    const engagementByPost = new Map(
+      normalizeEngagement(engagementResult.data).map((row) => [
+        row.post_id,
+        row,
+      ]),
+    );
+
+    if (commentsResult.error) {
+      setCommentsByPost({});
+      setPosts(
+        basePosts.map((post) => {
+          const engagement = engagementByPost.get(post.id);
+
+          return {
+            ...post,
+            liked_by_client: engagement?.liked_by_client ?? false,
+            likes_count: engagement?.likes_count ?? 0,
+          };
+        }),
+      );
+      setError(friendlySupabaseError(commentsResult.error.message));
+
+      return;
+    }
+
+    const groupedComments = groupCommentsByPost(
+      normalizeComments(commentsResult.data),
+    );
+
+    setCommentsByPost(groupedComments);
+    setPosts(
+      basePosts.map((post) => {
+        const engagement = engagementByPost.get(post.id);
+        const comments = groupedComments[post.id] ?? [];
+
+        return {
+          ...post,
+          comments_count: comments.length,
+          liked_by_client: engagement?.liked_by_client ?? false,
+          likes_count: engagement?.likes_count ?? 0,
+        };
+      }),
+    );
+  }, [client, clientId]);
 
   useEffect(() => {
     void loadPosts();
@@ -621,6 +1055,170 @@ export const TimelineFeed = () => {
 
     setConfirmOpen(false);
     await publishPost();
+  };
+
+  const onToggleLike = async (post: TimelinePostRow) => {
+    if (!client || likingPostIds[post.id]) return;
+
+    setLikingPostIds((current) => ({ ...current, [post.id]: true }));
+    setError(null);
+
+    const rpcResult = await client.rpc('toggle_timeline_post_like', {
+      p_client_id: clientId,
+      p_post_id: post.id,
+    });
+
+    setLikingPostIds((current) => ({ ...current, [post.id]: false }));
+
+    if (rpcResult.error) {
+      setError(friendlySupabaseError(rpcResult.error.message));
+
+      return;
+    }
+
+    const next = parseLikeToggle(rpcResult.data, post);
+    setPosts((current) =>
+      withUpdatedPost(current, post.id, (row) => ({
+        ...row,
+        liked_by_client: next.liked,
+        likes_count: Math.max(0, next.likesCount),
+      })),
+    );
+  };
+
+  const onSubmitComment = async (
+    event: FormEvent,
+    postId: string,
+    parentId: null | string,
+  ) => {
+    event.preventDefault();
+    if (!client || submittingCommentKey) return;
+
+    const key = parentId ? `reply-${parentId}` : `comment-${postId}`;
+    const value = parentId
+      ? replyDrafts[parentId]?.trim()
+      : commentDrafts[postId]?.trim();
+
+    if (!value) return;
+
+    setSubmittingCommentKey(key);
+    setError(null);
+
+    const { data, error: insertError } = await client
+      .from(COMMENTS_TABLE)
+      .insert({
+        author_name: '访客',
+        body: value,
+        parent_id: parentId,
+        post_id: postId,
+      })
+      .select('id, post_id, parent_id, author_name, body, created_at')
+      .single();
+
+    setSubmittingCommentKey(null);
+
+    if (insertError) {
+      setError(friendlySupabaseError(insertError.message));
+
+      return;
+    }
+
+    const [inserted] = normalizeComments([data]);
+    if (!inserted) return;
+
+    setCommentsByPost((current) => ({
+      ...current,
+      [postId]: [...(current[postId] ?? []), inserted],
+    }));
+    setPosts((current) =>
+      withUpdatedPost(current, postId, (row) => ({
+        ...row,
+        comments_count: row.comments_count + 1,
+      })),
+    );
+
+    if (parentId) {
+      setReplyDrafts((current) => ({ ...current, [parentId]: '' }));
+      setReplyTargets((current) => ({ ...current, [postId]: null }));
+    } else {
+      setCommentDrafts((current) => ({ ...current, [postId]: '' }));
+    }
+  };
+
+  const renderComment = (
+    postId: string,
+    comment: TimelineCommentRow,
+    repliesByParent: Record<string, TimelineCommentRow[]>,
+    depth = 0,
+  ) => {
+    const replyKey = `reply-${comment.id}`;
+    const isReplying = replyTargets[postId] === comment.id;
+    const replies = repliesByParent[comment.id] ?? [];
+    const replyDraft = replyDrafts[comment.id] ?? '';
+
+    return (
+      <CommentItem key={comment.id} $theme={theme} $depth={Math.min(depth, 3)}>
+        <CommentBubble $theme={theme}>
+          <CommentMeta $theme={theme}>
+            <strong>{comment.author_name}</strong>
+            <span>{formatTime(comment.created_at)}</span>
+          </CommentMeta>
+          <CommentBody $theme={theme}>{comment.body}</CommentBody>
+          <CommentTools>
+            <CommentToolButton
+              type="button"
+              $theme={theme}
+              onClick={() => {
+                setReplyTargets((current) => ({
+                  ...current,
+                  [postId]: isReplying ? null : comment.id,
+                }));
+              }}
+            >
+              {isReplying ? '取消回复' : '回复'}
+            </CommentToolButton>
+          </CommentTools>
+        </CommentBubble>
+
+        {isReplying ? (
+          <CommentForm
+            $compact
+            onSubmit={(event) => {
+              void onSubmitComment(event, postId, comment.id);
+            }}
+          >
+            <CommentInput
+              $theme={theme}
+              aria-label="回复评论"
+              maxLength={500}
+              placeholder="写回复…"
+              value={replyDraft}
+              onChange={(event) => {
+                setReplyDrafts((current) => ({
+                  ...current,
+                  [comment.id]: event.target.value,
+                }));
+              }}
+            />
+            <CommentSubmit
+              type="submit"
+              $theme={theme}
+              disabled={!replyDraft.trim() || submittingCommentKey === replyKey}
+            >
+              {submittingCommentKey === replyKey ? '发送中' : '发送'}
+            </CommentSubmit>
+          </CommentForm>
+        ) : null}
+
+        {replies.length > 0 ? (
+          <CommentList>
+            {replies.map((reply) =>
+              renderComment(postId, reply, repliesByParent, depth + 1),
+            )}
+          </CommentList>
+        ) : null}
+      </CommentItem>
+    );
   };
 
   return (
@@ -776,43 +1374,122 @@ export const TimelineFeed = () => {
         ) : posts.length === 0 ? (
           <EmptyState $theme={theme}>还没有动态</EmptyState>
         ) : (
-          posts.map((post) => (
-            <PostCard key={post.id} $theme={theme} data-v2="timeline-post">
-              <PostHeader>
-                <Avatar
-                  $theme={theme}
-                  $hasImage={Boolean(avatarSrc)}
-                  aria-hidden="true"
-                >
-                  {avatarSrc ? (
-                    <img src={avatarSrc} alt="" />
-                  ) : (
-                    config.avatar.initials
-                  )}
-                </Avatar>
-                <ComposerMeta>
-                  <Name $theme={theme}>{config.name.display}</Name>
-                  <Handle $theme={theme}>{formatTime(post.created_at)}</Handle>
-                </ComposerMeta>
-              </PostHeader>
-              {post.media_url && post.media_type ? (
-                <PostMedia>
-                  {post.media_type === 'image' ? (
-                    <img src={post.media_url} alt="" loading="lazy" />
-                  ) : (
-                    <video src={post.media_url} controls preload="metadata" />
-                  )}
-                </PostMedia>
-              ) : null}
-              {post.body ? (
-                <PostBody $theme={theme}>{post.body}</PostBody>
-              ) : null}
-              <PostFooter $theme={theme}>
-                <span>动态</span>
-                <span>{formatTime(post.created_at)}</span>
-              </PostFooter>
-            </PostCard>
-          ))
+          posts.map((post) => {
+            const comments = commentsByPost[post.id] ?? [];
+            const { repliesByParent, roots } = groupRepliesByParent(comments);
+            const commentDraft = commentDrafts[post.id] ?? '';
+            const commentKey = `comment-${post.id}`;
+
+            return (
+              <PostCard key={post.id} $theme={theme} data-v2="timeline-post">
+                <PostHeader>
+                  <Avatar
+                    $theme={theme}
+                    $hasImage={Boolean(avatarSrc)}
+                    aria-hidden="true"
+                  >
+                    {avatarSrc ? (
+                      <img src={avatarSrc} alt="" />
+                    ) : (
+                      config.avatar.initials
+                    )}
+                  </Avatar>
+                  <ComposerMeta>
+                    <Name $theme={theme}>{config.name.display}</Name>
+                    <Handle $theme={theme}>
+                      {formatTime(post.created_at)}
+                    </Handle>
+                  </ComposerMeta>
+                </PostHeader>
+                {post.media_url && post.media_type ? (
+                  <PostMedia>
+                    {post.media_type === 'image' ? (
+                      <img src={post.media_url} alt="" loading="lazy" />
+                    ) : (
+                      <video src={post.media_url} controls preload="metadata" />
+                    )}
+                  </PostMedia>
+                ) : null}
+                {post.body ? (
+                  <PostBody $theme={theme}>{post.body}</PostBody>
+                ) : null}
+                <PostFooter $theme={theme}>
+                  <span>动态</span>
+                  <span>{formatTime(post.created_at)}</span>
+                </PostFooter>
+                <PostActions $theme={theme}>
+                  <EngagementButton
+                    type="button"
+                    $theme={theme}
+                    $active={post.liked_by_client}
+                    aria-label={post.liked_by_client ? '取消点赞' : '点赞'}
+                    aria-pressed={post.liked_by_client}
+                    disabled={!client || Boolean(likingPostIds[post.id])}
+                    onClick={() => {
+                      void onToggleLike(post);
+                    }}
+                  >
+                    <span aria-hidden="true">♥</span>
+                    <span>{post.likes_count}</span>
+                  </EngagementButton>
+                  <EngagementButton
+                    type="button"
+                    $theme={theme}
+                    aria-label="评论"
+                    disabled={!client}
+                    onClick={() => {
+                      const field = document.getElementById(
+                        `timeline-comment-${post.id}`,
+                      );
+                      field?.focus();
+                    }}
+                  >
+                    <span aria-hidden="true">💬</span>
+                    <span>{post.comments_count}</span>
+                  </EngagementButton>
+                </PostActions>
+                <CommentsPanel $theme={theme} aria-label="评论">
+                  <CommentForm
+                    onSubmit={(event) => {
+                      void onSubmitComment(event, post.id, null);
+                    }}
+                  >
+                    <CommentInput
+                      id={`timeline-comment-${post.id}`}
+                      $theme={theme}
+                      aria-label="评论内容"
+                      maxLength={500}
+                      placeholder="写评论…"
+                      value={commentDraft}
+                      onChange={(event) => {
+                        setCommentDrafts((current) => ({
+                          ...current,
+                          [post.id]: event.target.value,
+                        }));
+                      }}
+                    />
+                    <CommentSubmit
+                      type="submit"
+                      $theme={theme}
+                      disabled={
+                        !commentDraft.trim() ||
+                        submittingCommentKey === commentKey
+                      }
+                    >
+                      {submittingCommentKey === commentKey ? '发送中' : '发送'}
+                    </CommentSubmit>
+                  </CommentForm>
+                  {roots.length > 0 ? (
+                    <CommentList>
+                      {roots.map((comment) =>
+                        renderComment(post.id, comment, repliesByParent),
+                      )}
+                    </CommentList>
+                  ) : null}
+                </CommentsPanel>
+              </PostCard>
+            );
+          })
         )}
       </PostList>
     </Shell>
