@@ -53,23 +53,6 @@ interface GlobeControlApi {
   minDistance: number;
 }
 
-interface Vector3Like {
-  x: number;
-  y: number;
-  z: number;
-}
-
-interface CameraWithPosition {
-  position: Vector3Like;
-}
-
-interface ProjectedTravelCity extends TravelCity {
-  isSelected: boolean;
-  isVisible: boolean;
-  x: number;
-  y: number;
-}
-
 const MAP_ASSET_BASE = `${process.env.PUBLIC_URL ?? ''}/maps`;
 const EARTH_TEXTURE = `${MAP_ASSET_BASE}/earth-contrast-v2.jpg`;
 const EARTH_BUMP = `${MAP_ASSET_BASE}/earth-topology.png`;
@@ -98,11 +81,6 @@ const MARKER_COLORS = {
 };
 
 const CITY_POINT_ALTITUDE = 0.018;
-const CITY_MARKER_ALTITUDE = 0.055;
-const CITY_MARKER_REFRESH_MS = {
-  desktop: 80,
-  mobile: 220,
-};
 
 const DESKTOP_RENDERER_CONFIG = {
   alpha: true,
@@ -202,61 +180,6 @@ const GlobeStage = styled.section`
     cursor: grabbing;
   }
 
-  .travel-city-marker {
-    position: relative;
-    display: grid;
-    place-items: center;
-    pointer-events: auto;
-    transform: translate(-50%, -50%);
-  }
-
-  .travel-city-marker__dot {
-    width: 0.62rem;
-    aspect-ratio: 1;
-    padding: 0;
-    border: 1px solid rgba(5, 14, 22, 0.72);
-    border-radius: 999px;
-    background: ${MARKER_COLORS.default};
-    box-shadow:
-      0 0 0 3px rgba(84, 215, 255, 0.22),
-      0 0 16px rgba(84, 215, 255, 0.42);
-    cursor: pointer;
-    transition:
-      background 0.16s ease,
-      box-shadow 0.16s ease,
-      transform 0.16s ease,
-      width 0.16s ease;
-  }
-
-  .travel-city-marker__dot:hover,
-  .travel-city-marker--selected .travel-city-marker__dot {
-    width: 0.82rem;
-    background: ${MARKER_COLORS.selected};
-    box-shadow:
-      0 0 0 4px rgba(255, 232, 128, 0.2),
-      0 0 18px rgba(255, 232, 128, 0.5);
-    transform: translateY(-1px);
-  }
-
-  .travel-city-marker__label {
-    position: absolute;
-    bottom: calc(100% + 0.42rem);
-    left: 50%;
-    padding: 0.28rem 0.48rem;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 999px;
-    background: rgba(5, 10, 18, 0.8);
-    box-shadow: 0 0.65rem 1.4rem rgba(0, 0, 0, 0.28);
-    color: #f8fdff;
-    font-size: 0.72rem;
-    font-weight: 760;
-    line-height: 1;
-    pointer-events: none;
-    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
-    transform: translateX(-50%);
-    white-space: nowrap;
-  }
-
   @media (width <= 768px) {
     height: clamp(19rem, 50dvh, 28rem);
     border-radius: 14px;
@@ -276,13 +199,12 @@ const GlobeLoadingOverlay = styled.div<{ $visible: boolean }>`
   display: grid;
   place-items: center;
   padding: 1.5rem;
-  background:
-    radial-gradient(
-      circle at 50% 42%,
-      rgba(71, 205, 255, 0.18),
-      rgba(3, 5, 10, 0.2) 34%,
-      rgba(3, 5, 10, 0.58) 100%
-    );
+  background: radial-gradient(
+    circle at 50% 42%,
+    rgba(71, 205, 255, 0.18),
+    rgba(3, 5, 10, 0.2) 34%,
+    rgba(3, 5, 10, 0.58) 100%
+  );
   color: #f8fdff;
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   pointer-events: none;
@@ -344,25 +266,6 @@ const GlobeLoadingBar = styled.div`
   }
 `;
 
-const MarkerOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-`;
-
-const ProjectedMarker = styled.div<{ $visible: boolean }>`
-  && {
-    position: absolute;
-    display: grid;
-    place-items: center;
-    opacity: ${({ $visible }) => ($visible ? 1 : 0)};
-    pointer-events: ${({ $visible }) => ($visible ? 'auto' : 'none')};
-    transform: translate(-50%, -50%);
-    transition: opacity 0.12s ease;
-  }
-`;
-
 const ControlDock = styled.div`
   position: absolute;
   right: 1rem;
@@ -401,6 +304,30 @@ const ControlButton = styled.button`
     transform: translateY(-1px);
     border-color: rgba(255, 255, 255, 0.42);
     background: rgba(20, 28, 44, 0.78);
+  }
+`;
+
+const SelectedCityPanel = styled.div`
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  max-width: min(15rem, calc(100% - 8.5rem));
+  padding: 0.58rem 0.72rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(5, 10, 18, 0.68);
+  color: #f8fdff;
+  font-size: 0.78rem;
+  font-weight: 760;
+  line-height: 1.15;
+  pointer-events: none;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+
+  @media (width <= 520px) {
+    left: 0.75rem;
+    bottom: 0.75rem;
+    max-width: min(12rem, calc(100% - 8rem));
   }
 `;
 
@@ -445,21 +372,11 @@ const getPointAltitude = () => CITY_POINT_ALTITUDE;
 
 const getEmptyTooltip = () => '';
 
-const isCityFacingCamera = (globe: GlobeMethods, city: TravelCity) => {
-  const point = globe.getCoords(city.lat, city.lng, CITY_POINT_ALTITUDE);
-  const camera = (globe.camera() as unknown as CameraWithPosition).position;
-
-  return point.x * camera.x + point.y * camera.y + point.z * camera.z > 0;
-};
-
 export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
   const { isMobile } = useContext(AppContext);
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
   const stageRef = useRef<HTMLDivElement>(null);
   const [globeSize, setGlobeSize] = useState<GlobeSize>(DEFAULT_GLOBE_SIZE);
-  const [projectedCities, setProjectedCities] = useState<
-    ProjectedTravelCity[]
-  >([]);
   const [ready, setReady] = useState(false);
   const [selectedCity, setSelectedCity] = useState<null | TravelCity>(null);
 
@@ -511,52 +428,6 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
     globe.pointOfView(DEFAULT_VIEW, isMobile ? 560 : 900);
   }, [isMobile, ready]);
 
-  useEffect(() => {
-    if (!ready) return undefined;
-
-    let refreshId = 0;
-
-    const projectCities = () => {
-      const globe = globeRef.current;
-      if (!globe) return;
-
-      setProjectedCities(
-        travelCities.map((city) => {
-          const screen = globe.getScreenCoords(
-            city.lat,
-            city.lng,
-            CITY_MARKER_ALTITUDE,
-          );
-          const isVisible =
-            isCityFacingCamera(globe, city) &&
-            screen.x >= -24 &&
-            screen.x <= globeSize.width + 24 &&
-            screen.y >= -24 &&
-            screen.y <= globeSize.height + 24;
-
-          return {
-            ...city,
-            isSelected: city.id === selectedCity?.id,
-            isVisible,
-            x: screen.x,
-            y: screen.y,
-          };
-        }),
-      );
-
-      refreshId = window.setTimeout(
-        projectCities,
-        isMobile ? CITY_MARKER_REFRESH_MS.mobile : CITY_MARKER_REFRESH_MS.desktop,
-      );
-    };
-
-    projectCities();
-
-    return () => {
-      window.clearTimeout(refreshId);
-    };
-  }, [globeSize.height, globeSize.width, isMobile, ready, selectedCity?.id]);
-
   const zoomBy = useCallback((delta: number) => {
     const globe = globeRef.current;
     if (!globe) return;
@@ -566,21 +437,24 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
     globe.pointOfView({ altitude }, 360);
   }, []);
 
-  const handleCityClick = useCallback((item: object) => {
-    const city = pickCity(item);
-    const globe = globeRef.current;
+  const handleCityClick = useCallback(
+    (item: object) => {
+      const city = pickCity(item);
+      const globe = globeRef.current;
 
-    setSelectedCity(city);
+      setSelectedCity(city);
 
-    if (!globe) return;
+      if (!globe) return;
 
-    const controls = getControls(globe);
-    controls.autoRotate = false;
-    globe.pointOfView(
-      { altitude: isMobile ? 1.18 : 1.08, lat: city.lat, lng: city.lng },
-      isMobile ? 420 : 560,
-    );
-  }, [isMobile]);
+      const controls = getControls(globe);
+      controls.autoRotate = false;
+      globe.pointOfView(
+        { altitude: isMobile ? 1.18 : 1.08, lat: city.lat, lng: city.lng },
+        isMobile ? 420 : 560,
+      );
+    },
+    [isMobile],
+  );
 
   const resetGlobe = useCallback(() => {
     const globe = globeRef.current;
@@ -601,8 +475,14 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
   );
 
   const getPointRadius = useCallback(
-    (item: object) => (pickCity(item).id === selectedCity?.id ? 0.28 : 0.18),
-    [selectedCity?.id],
+    (item: object) => {
+      const selected = pickCity(item).id === selectedCity?.id;
+
+      if (isMobile) return selected ? 0.34 : 0.24;
+
+      return selected ? 0.28 : 0.18;
+    },
+    [isMobile, selectedCity?.id],
   );
 
   return (
@@ -616,7 +496,7 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
             backgroundColor="rgba(0,0,0,0)"
             backgroundImageUrl={null}
             globeImageUrl={EARTH_TEXTURE}
-            bumpImageUrl={EARTH_BUMP}
+            bumpImageUrl={isMobile ? null : EARTH_BUMP}
             rendererConfig={
               isMobile ? MOBILE_RENDERER_CONFIG : DESKTOP_RENDERER_CONFIG
             }
@@ -630,7 +510,7 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
             polygonSideColor={() => ''}
             polygonStrokeColor={getRegionStrokeColor}
             polygonsTransitionDuration={isMobile ? 0 : 700}
-            hexPolygonsData={travelRegionFeatures}
+            hexPolygonsData={isMobile ? [] : travelRegionFeatures}
             hexPolygonGeoJsonGeometry={getRegionGeometry}
             hexPolygonResolution={
               isMobile ? getMobileRegionHexResolution : getRegionHexResolution
@@ -646,11 +526,11 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
             pointLng="lng"
             pointAltitude={getPointAltitude}
             pointRadius={getPointRadius}
-            pointResolution={isMobile ? 10 : 18}
+            pointResolution={isMobile ? 8 : 18}
             pointColor={getPointColor}
             pointLabel={getEmptyTooltip}
             pointsMerge={false}
-            pointsTransitionDuration={isMobile ? 80 : 180}
+            pointsTransitionDuration={isMobile ? 0 : 180}
             onPointClick={handleCityClick}
             onGlobeReady={() => {
               setReady(true);
@@ -669,33 +549,9 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
             <GlobeLoadingCopy>正在点亮去过的城市</GlobeLoadingCopy>
           </GlobeLoadingStatus>
         </GlobeLoadingOverlay>
-        <MarkerOverlay aria-hidden={!ready}>
-          {projectedCities.map((city) => (
-            <ProjectedMarker
-              key={city.id}
-              className={`travel-city-marker${
-                city.isSelected ? ' travel-city-marker--selected' : ''
-              }`}
-              $visible={city.isVisible}
-              style={{ left: city.x, top: city.y }}
-            >
-              <button
-                type="button"
-                className="travel-city-marker__dot"
-                aria-label={getCityLabel(city)}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleCityClick(city);
-                }}
-              />
-              {city.isSelected ? (
-                <span className="travel-city-marker__label">
-                  {getCityLabel(city)}
-                </span>
-              ) : null}
-            </ProjectedMarker>
-          ))}
-        </MarkerOverlay>
+        {selectedCity ? (
+          <SelectedCityPanel>{getCityLabel(selectedCity)}</SelectedCityPanel>
+        ) : null}
         <ControlDock aria-label="Globe controls">
           <ControlButton
             type="button"
