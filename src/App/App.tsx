@@ -6,6 +6,8 @@ import { HomeScreen } from 'components/HomeScreen';
 import { MobileHeader } from 'components/MobileHeader';
 import { MobileNav } from 'components/MobileNav';
 import { Sidebar } from 'components/Sidebar';
+import { preloadTravelGlobe } from 'components/travelGlobeLoader';
+import { scheduleIdleTask } from 'lib/scheduleIdleTask';
 
 import './App.scss';
 import { AppContext, AppProvider } from './AppContext';
@@ -138,6 +140,15 @@ const AppViews = () => {
 
 export const App = () => {
   const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(
+    () =>
+      scheduleIdleTask(preloadTravelGlobe, {
+        delay: 900,
+        timeout: 1800,
+      }),
+    [],
+  );
 
   useEffect(() => {
     const mediaQuery = '(max-width: 768px)';

@@ -32,6 +32,20 @@ export const travelCities: TravelCity[] = [
     lng: 117.3785,
   },
   {
+    city: '呼伦贝尔',
+    country: '中国',
+    id: 'hulunbuir',
+    lat: 49.2116,
+    lng: 119.7658,
+  },
+  {
+    city: '通辽',
+    country: '中国',
+    id: 'tongliao',
+    lat: 43.6529,
+    lng: 122.2434,
+  },
+  {
     city: '乌鲁木齐',
     country: '中国',
     id: 'urumqi',

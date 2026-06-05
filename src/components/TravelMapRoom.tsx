@@ -1,19 +1,26 @@
 import {
+  lazy,
   ReactNode,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
 } from 'react';
-import Globe, { GlobeMethods } from 'react-globe.gl';
+
+import type { GlobeMethods } from 'react-globe.gl';
 
 import styled, { keyframes } from 'styled-components';
 
 import { AppContext } from 'App/AppContext';
+import { scheduleIdleTask } from 'lib/scheduleIdleTask';
 
 import { travelCities, type TravelCity } from '../data/travelCities';
 import travelRegions from '../data/travelRegions.json';
+import { loadTravelGlobe } from './travelGlobeLoader';
+
+const Globe = lazy(loadTravelGlobe);
 
 type TravelRegionKind = 'country' | 'province';
 
@@ -53,6 +60,8 @@ interface GlobeControlApi {
   minDistance: number;
 }
 
+type MapRenderPhase = 'base' | 'hex' | 'polygons' | 'texture';
+
 const MAP_ASSET_BASE = `${process.env.PUBLIC_URL ?? ''}/maps`;
 const EARTH_TEXTURE = `${MAP_ASSET_BASE}/earth-contrast-v2.jpg`;
 const EARTH_BUMP = `${MAP_ASSET_BASE}/earth-topology.png`;
@@ -81,6 +90,10 @@ const MARKER_COLORS = {
 };
 
 const CITY_POINT_ALTITUDE = 0.018;
+const GLOBE_MOUNT_DELAY_MS = {
+  desktop: 80,
+  mobile: 2400,
+};
 
 const DESKTOP_RENDERER_CONFIG = {
   alpha: true,
@@ -103,6 +116,7 @@ const COMPACT_REGION_IDS = new Set([
 const travelRegionFeatures = (
   travelRegions as unknown as TravelRegionCollection
 ).features;
+const EMPTY_REGION_FEATURES: TravelRegionFeature[] = [];
 
 const progressSweep = keyframes`
   0% {
@@ -376,8 +390,11 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
   const { isMobile } = useContext(AppContext);
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
   const stageRef = useRef<HTMLDivElement>(null);
+  const [canMountGlobe, setCanMountGlobe] = useState(false);
+  const [globeReady, setGlobeReady] = useState(false);
   const [globeSize, setGlobeSize] = useState<GlobeSize>(DEFAULT_GLOBE_SIZE);
-  const [ready, setReady] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapRenderPhase, setMapRenderPhase] = useState<MapRenderPhase>('base');
   const [selectedCity, setSelectedCity] = useState<null | TravelCity>(null);
 
   useEffect(() => {
@@ -415,7 +432,7 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
 
   useEffect(() => {
     const globe = globeRef.current;
-    if (!ready || !globe) return;
+    if (!globeReady || !globe) return;
 
     const controls = getControls(globe);
     controls.autoRotate = !isMobile;
@@ -426,7 +443,70 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
     controls.maxDistance = 470;
 
     globe.pointOfView(DEFAULT_VIEW, isMobile ? 560 : 900);
-  }, [isMobile, ready]);
+  }, [globeReady, isMobile]);
+
+  useEffect(() => {
+    globeRef.current = undefined;
+    setCanMountGlobe(false);
+    setGlobeReady(false);
+    setMapReady(false);
+    setMapRenderPhase('base');
+    setSelectedCity(null);
+
+    const timer = window.setTimeout(
+      () => {
+        setCanMountGlobe(true);
+      },
+      isMobile ? GLOBE_MOUNT_DELAY_MS.mobile : GLOBE_MOUNT_DELAY_MS.desktop,
+    );
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (!canMountGlobe || !globeReady) return undefined;
+
+    return scheduleIdleTask(
+      () => {
+        setMapRenderPhase('texture');
+      },
+      {
+        delay: isMobile ? 120 : 40,
+        timeout: isMobile ? 1200 : 700,
+      },
+    );
+  }, [canMountGlobe, globeReady, isMobile]);
+
+  useEffect(() => {
+    if (mapRenderPhase !== 'texture') return undefined;
+
+    return scheduleIdleTask(
+      () => {
+        setMapRenderPhase('polygons');
+      },
+      {
+        delay: isMobile ? 360 : 100,
+        timeout: isMobile ? 1600 : 800,
+      },
+    );
+  }, [isMobile, mapRenderPhase]);
+
+  useEffect(() => {
+    if (mapRenderPhase !== 'polygons') return undefined;
+
+    return scheduleIdleTask(
+      () => {
+        setMapRenderPhase('hex');
+        setMapReady(true);
+      },
+      {
+        delay: isMobile ? 420 : 120,
+        timeout: isMobile ? 1800 : 900,
+      },
+    );
+  }, [isMobile, mapRenderPhase]);
 
   const zoomBy = useCallback((delta: number) => {
     const globe = globeRef.current;
@@ -485,61 +565,75 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
     [isMobile, selectedCity?.id],
   );
 
+  const shouldShowGlobeLoading = !mapReady || !canMountGlobe;
+  const polygonRegionFeatures =
+    mapRenderPhase === 'hex' || mapRenderPhase === 'polygons'
+      ? travelRegionFeatures
+      : EMPTY_REGION_FEATURES;
+  const hexRegionFeatures =
+    mapRenderPhase === 'hex' ? travelRegionFeatures : EMPTY_REGION_FEATURES;
+
   return (
     <Page data-page-root data-v2="travel-map-room">
       <GlobeStage ref={stageRef} data-v2="travel-globe-stage">
         <GlobeLayer data-v2="travel-globe-layer">
-          <Globe
-            ref={globeRef}
-            width={globeSize.width}
-            height={globeSize.height}
-            backgroundColor="rgba(0,0,0,0)"
-            backgroundImageUrl={null}
-            globeImageUrl={EARTH_TEXTURE}
-            bumpImageUrl={isMobile ? null : EARTH_BUMP}
-            rendererConfig={
-              isMobile ? MOBILE_RENDERER_CONFIG : DESKTOP_RENDERER_CONFIG
-            }
-            showAtmosphere={false}
-            animateIn={!isMobile}
-            waitForGlobeReady={true}
-            polygonsData={travelRegionFeatures}
-            polygonGeoJsonGeometry={getRegionGeometry}
-            polygonAltitude={0.006}
-            polygonCapColor={() => ''}
-            polygonSideColor={() => ''}
-            polygonStrokeColor={getRegionStrokeColor}
-            polygonsTransitionDuration={isMobile ? 0 : 700}
-            hexPolygonsData={isMobile ? [] : travelRegionFeatures}
-            hexPolygonGeoJsonGeometry={getRegionGeometry}
-            hexPolygonResolution={
-              isMobile ? getMobileRegionHexResolution : getRegionHexResolution
-            }
-            hexPolygonMargin={isMobile ? 0.08 : 0.05}
-            hexPolygonAltitude={0.008}
-            hexPolygonColor={getRegionFillColor}
-            hexPolygonCurvatureResolution={isMobile ? 1 : 3}
-            hexPolygonsTransitionDuration={isMobile ? 0 : 700}
-            hexPolygonLabel={() => ''}
-            pointsData={travelCities}
-            pointLat="lat"
-            pointLng="lng"
-            pointAltitude={getPointAltitude}
-            pointRadius={getPointRadius}
-            pointResolution={isMobile ? 8 : 18}
-            pointColor={getPointColor}
-            pointLabel={getEmptyTooltip}
-            pointsMerge={false}
-            pointsTransitionDuration={isMobile ? 0 : 180}
-            onPointClick={handleCityClick}
-            onGlobeReady={() => {
-              setReady(true);
-            }}
-          />
+          {canMountGlobe ? (
+            <Suspense fallback={null}>
+              <Globe
+                ref={globeRef}
+                width={globeSize.width}
+                height={globeSize.height}
+                backgroundColor="rgba(0,0,0,0)"
+                backgroundImageUrl={null}
+                globeImageUrl={mapRenderPhase === 'base' ? null : EARTH_TEXTURE}
+                bumpImageUrl={isMobile ? null : EARTH_BUMP}
+                rendererConfig={
+                  isMobile ? MOBILE_RENDERER_CONFIG : DESKTOP_RENDERER_CONFIG
+                }
+                showAtmosphere={false}
+                animateIn={!isMobile}
+                waitForGlobeReady={true}
+                polygonsData={polygonRegionFeatures}
+                polygonGeoJsonGeometry={getRegionGeometry}
+                polygonAltitude={0.006}
+                polygonCapColor={() => ''}
+                polygonSideColor={() => ''}
+                polygonStrokeColor={getRegionStrokeColor}
+                polygonsTransitionDuration={isMobile ? 0 : 700}
+                hexPolygonsData={hexRegionFeatures}
+                hexPolygonGeoJsonGeometry={getRegionGeometry}
+                hexPolygonResolution={
+                  isMobile
+                    ? getMobileRegionHexResolution
+                    : getRegionHexResolution
+                }
+                hexPolygonMargin={isMobile ? 0.08 : 0.05}
+                hexPolygonAltitude={0.008}
+                hexPolygonColor={getRegionFillColor}
+                hexPolygonCurvatureResolution={isMobile ? 1 : 3}
+                hexPolygonsTransitionDuration={isMobile ? 0 : 700}
+                hexPolygonLabel={() => ''}
+                pointsData={travelCities}
+                pointLat="lat"
+                pointLng="lng"
+                pointAltitude={getPointAltitude}
+                pointRadius={getPointRadius}
+                pointResolution={isMobile ? 8 : 18}
+                pointColor={getPointColor}
+                pointLabel={getEmptyTooltip}
+                pointsMerge={false}
+                pointsTransitionDuration={isMobile ? 0 : 180}
+                onPointClick={handleCityClick}
+                onGlobeReady={() => {
+                  setGlobeReady(true);
+                }}
+              />
+            </Suspense>
+          ) : null}
         </GlobeLayer>
         <GlobeLoadingOverlay
-          $visible={!ready}
-          aria-hidden={ready}
+          $visible={shouldShowGlobeLoading}
+          aria-hidden={!shouldShowGlobeLoading}
           aria-live="polite"
           role="status"
         >
