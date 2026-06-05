@@ -45,10 +45,22 @@ export const config: Config = {
       icon: <ProfileNavIcon />,
     },
     {
+      name: 'likes',
+      display: '喜欢',
+      view: 'likes',
+      icon: <LikesNavIcon />,
+    },
+    {
       name: 'gallery',
       display: '画廊',
       view: 'gallery',
       icon: <GalleryNavIcon />,
+    },
+    {
+      name: 'fun',
+      display: '玩具',
+      view: 'fun',
+      icon: <FunNavIcon />,
     },
     {
       name: 'blog',
@@ -63,22 +75,10 @@ export const config: Config = {
       icon: <AskNavIcon />,
     },
     {
-      name: 'likes',
-      display: '喜欢',
-      view: 'likes',
-      icon: <LikesNavIcon />,
-    },
-    {
       name: 'guestbook',
       display: '留言',
       view: 'guestbook',
       icon: <GuestbookNavIcon />,
-    },
-    {
-      name: 'fun',
-      display: '玩具',
-      view: 'fun',
-      icon: <FunNavIcon />,
     },
   ],
   dockItems: [

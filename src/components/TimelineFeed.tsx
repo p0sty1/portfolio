@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 import { AppContext } from 'App/AppContext';
 import { getSupabase } from 'lib/supabaseClient';
@@ -279,6 +279,24 @@ const friendlySupabaseError = (message: string) => {
   return message;
 };
 
+const loadingSpin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const LoadingRing = styled.span<{ $size?: string }>`
+  display: inline-block;
+  width: ${({ $size }) => $size ?? '1rem'};
+  aspect-ratio: 1;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  opacity: 0.84;
+  animation: ${loadingSpin} 0.78s linear infinite;
+`;
+
 const Shell = styled.section`
   display: grid;
   gap: 0;
@@ -514,9 +532,11 @@ const PostBody = styled.p<{ $theme: Theme }>`
   line-height: 1.68;
 `;
 
-const PostMedia = styled.div`
+const PostMedia = styled.div<{ $loading?: boolean }>`
+  position: relative;
   overflow: hidden;
   margin: 0 1rem 0.85rem;
+  min-height: ${({ $loading }) => ($loading ? 'min(54vw, 17rem)' : '0')};
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 14px;
   background: #050505;
@@ -528,6 +548,29 @@ const PostMedia = styled.div`
     max-height: 68vh;
     object-fit: contain;
   }
+`;
+
+const PostImage = styled.img<{ $loaded: boolean }>`
+  opacity: ${({ $loaded }) => ($loaded ? 1 : 0)};
+  transition: opacity 0.22s ease;
+`;
+
+const MediaLoadingLayer = styled.div<{ $visible: boolean }>`
+  position: absolute;
+  inset: 0;
+  display: grid;
+  min-height: inherit;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.1), transparent 38%),
+    #050505;
+  color: rgba(255, 255, 255, 0.82);
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    visibility 0.18s ease;
+  visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
 `;
 
 const PostFooter = styled.footer<{ $theme: Theme }>`
@@ -724,6 +767,12 @@ const EmptyState = styled.div<{ $theme: Theme }>`
   text-align: center;
 `;
 
+const EmptyStateContent = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+`;
+
 const ConfirmOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -782,6 +831,31 @@ const ConfirmActions = styled.div`
   gap: 0.65rem;
   margin-top: 1rem;
 `;
+
+const TimelinePostImage = ({ src }: { src: string }) => {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <PostMedia $loading={!loaded}>
+      <PostImage
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        $loaded={loaded}
+        onLoad={() => {
+          setLoaded(true);
+        }}
+        onError={() => {
+          setLoaded(true);
+        }}
+      />
+      <MediaLoadingLayer $visible={!loaded} aria-hidden={loaded}>
+        <LoadingRing $size="1.6rem" aria-hidden="true" />
+      </MediaLoadingLayer>
+    </PostMedia>
+  );
+};
 
 export const TimelineFeed = () => {
   const { config, theme } = useContext(AppContext);
@@ -1370,7 +1444,12 @@ export const TimelineFeed = () => {
 
       <PostList aria-live="polite" aria-busy={loading}>
         {loading ? (
-          <EmptyState $theme={theme}>动态加载中</EmptyState>
+          <EmptyState $theme={theme}>
+            <EmptyStateContent>
+              <LoadingRing aria-hidden="true" />
+              动态加载中
+            </EmptyStateContent>
+          </EmptyState>
         ) : posts.length === 0 ? (
           <EmptyState $theme={theme}>还没有动态</EmptyState>
         ) : (
@@ -1402,13 +1481,13 @@ export const TimelineFeed = () => {
                   </ComposerMeta>
                 </PostHeader>
                 {post.media_url && post.media_type ? (
-                  <PostMedia>
-                    {post.media_type === 'image' ? (
-                      <img src={post.media_url} alt="" loading="lazy" />
-                    ) : (
+                  post.media_type === 'image' ? (
+                    <TimelinePostImage src={post.media_url} />
+                  ) : (
+                    <PostMedia>
                       <video src={post.media_url} controls preload="metadata" />
-                    )}
-                  </PostMedia>
+                    </PostMedia>
+                  )
                 ) : null}
                 {post.body ? (
                   <PostBody $theme={theme}>{post.body}</PostBody>

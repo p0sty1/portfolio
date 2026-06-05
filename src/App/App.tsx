@@ -1,25 +1,62 @@
-import { useContext, useEffect, useState } from 'react';
+import { lazy, Suspense, useContext, useEffect, useState } from 'react';
 
-import {
-  AskRoom,
-  Background,
-  BlogRoom,
-  Footer,
-  FunRoom,
-  Gallery,
-  Guestbook,
-  HomeScreen,
-  IdealTypeTestRoom,
-  Likes,
-  MobileHeader,
-  MobileNav,
-  ProfileRoom,
-  Sidebar,
-} from 'components';
+import { Background } from 'components/Background';
+import { Footer } from 'components/Footer';
+import { HomeScreen } from 'components/HomeScreen';
+import { MobileHeader } from 'components/MobileHeader';
+import { MobileNav } from 'components/MobileNav';
+import { Sidebar } from 'components/Sidebar';
 
 import './App.scss';
 import { AppContext, AppProvider } from './AppContext';
 import { config } from './config';
+
+const AskRoom = lazy(() =>
+  import('components/SocialRooms').then((module) => ({
+    default: module.AskRoom,
+  })),
+);
+const BlogRoom = lazy(() =>
+  import('components/BlogRoom').then((module) => ({
+    default: module.BlogRoom,
+  })),
+);
+const FunRoom = lazy(() =>
+  import('components/SocialRooms').then((module) => ({
+    default: module.FunRoom,
+  })),
+);
+const Gallery = lazy(() =>
+  import('components/Gallery').then((module) => ({
+    default: module.Gallery,
+  })),
+);
+const Guestbook = lazy(() =>
+  import('components/Guestbook').then((module) => ({
+    default: module.Guestbook,
+  })),
+);
+const IdealTypeTestRoom = lazy(() =>
+  import('components/SocialRooms').then((module) => ({
+    default: module.IdealTypeTestRoom,
+  })),
+);
+const Likes = lazy(() =>
+  import('components/Likes').then((module) => ({
+    default: module.Likes,
+  })),
+);
+const ProfileRoom = lazy(() =>
+  import('components/SocialRooms').then((module) => ({
+    default: module.ProfileRoom,
+  })),
+);
+
+const ViewLoading = () => (
+  <div className="app-view-loading" role="status" aria-live="polite">
+    <span aria-hidden="true" />
+  </div>
+);
 
 const AppViews = () => {
   const { activeView } = useContext(AppContext);
@@ -124,7 +161,9 @@ export const App = () => {
         <div className={`app-shell${isMobile ? ' app-shell-mobile' : ''}`}>
           {isMobile ? <MobileHeader /> : <Sidebar />}
           <div className={`app-main${isMobile ? ' app-main-mobile' : ''}`}>
-            <AppViews />
+            <Suspense fallback={<ViewLoading />}>
+              <AppViews />
+            </Suspense>
           </div>
           {isMobile ? <MobileNav /> : null}
         </div>

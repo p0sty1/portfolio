@@ -76,6 +76,29 @@ body {
   overflow: hidden;
 }
 
+.app-view-loading {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  color: rgb(16 16 16 / 48%);
+}
+
+.app-view-loading span {
+  width: 1.45rem;
+  aspect-ratio: 1;
+  border: 2px solid currentcolor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: app-view-loading-spin 0.78s linear infinite;
+}
+
+@keyframes app-view-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .app-main-mobile .app-view {
   overflow: hidden auto;
   -webkit-overflow-scrolling: touch;
