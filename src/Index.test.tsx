@@ -41,6 +41,8 @@ const mockState = {
 
 describe('application tests', () => {
   beforeEach(async () => {
+    window.localStorage.clear();
+    window.history.pushState({}, '', '/');
     await act(() => render(<App />));
   });
 
@@ -71,40 +73,74 @@ describe('application tests', () => {
   it('should render home screen with timeline feed', () => {
     expect(screen.getByTestId('home-screen')).toBeVisible();
     expect(screen.getByTestId('timeline-feed')).toBeVisible();
-    expect(screen.getByTestId('timeline-composer')).toBeVisible();
+    expect(screen.queryByTestId('timeline-composer')).not.toBeInTheDocument();
   });
 
-  it('should render travel map in profile', () => {
-    fireEvent.click(screen.getByTestId('nav-profile'));
+  it('should render admin gate on admin route', () => {
+    act(() => {
+      window.history.pushState({}, '', '/admin');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
 
-    expect(screen.getByTestId('travel-map-room')).toBeVisible();
+    expect(screen.getByTestId('admin-screen')).toBeVisible();
+    expect(screen.getByTestId('admin-gate')).toBeVisible();
+    expect(screen.queryByTestId('timeline-composer')).not.toBeInTheDocument();
+  });
+
+  it('should render travel map in profile', async () => {
+    act(() => {
+      fireEvent.click(screen.getByTestId('nav-profile'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('travel-map-room')).toBeVisible();
+    });
     expect(screen.getByTestId('travel-globe-stage')).toBeVisible();
-    expect(screen.getByTestId('mock-travel-globe-canvas')).toBeVisible();
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-travel-globe-canvas')).toBeVisible();
+    });
   });
 
-  it('should switch to guestbook from sidebar', () => {
+  it('should switch to guestbook from sidebar', async () => {
     expect(screen.queryByTestId('guestbook')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('nav-guestbook'));
-    expect(screen.getByTestId('guestbook')).toBeVisible();
+    act(() => {
+      fireEvent.click(screen.getByTestId('nav-guestbook'));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('guestbook')).toBeVisible();
+    });
     expect(screen.getByTestId('nav-guestbook')).toHaveAttribute(
       'aria-current',
       'page',
     );
   });
 
-  it('should return home from sidebar nav', () => {
-    fireEvent.click(screen.getByTestId('nav-guestbook'));
-    fireEvent.click(screen.getByTestId('nav-home'));
-    expect(screen.getByTestId('home-screen')).toBeVisible();
+  it('should return home from sidebar nav', async () => {
+    act(() => {
+      fireEvent.click(screen.getByTestId('nav-guestbook'));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('guestbook')).toBeVisible();
+    });
+    act(() => {
+      fireEvent.click(screen.getByTestId('nav-home'));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('home-screen')).toBeVisible();
+    });
     expect(screen.queryByTestId('guestbook')).not.toBeInTheDocument();
   });
 
   it('should switch to gallery from sidebar', async () => {
     expect(screen.queryByTestId('gallery')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('nav-gallery'));
-    expect(screen.getByTestId('gallery')).toBeVisible();
+    act(() => {
+      fireEvent.click(screen.getByTestId('nav-gallery'));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('gallery')).toBeVisible();
+    });
     await waitFor(() => {
       expect(screen.getByTestId('gallery-card-g1')).toBeVisible();
     });

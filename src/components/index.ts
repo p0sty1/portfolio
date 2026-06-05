@@ -1,3 +1,4 @@
+export * from './AdminScreen';
 export * from './AppIcon';
 export * from './Background';
 export * from './BlogRoom';

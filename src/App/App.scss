@@ -52,6 +52,10 @@ body {
   flex-direction: column;
 }
 
+.app-shell-admin {
+  overflow: hidden;
+}
+
 .app-main {
   flex: 1;
   min-width: 0;
@@ -63,6 +67,11 @@ body {
 
 .app-main-mobile {
   min-height: 0;
+}
+
+.app-main-admin {
+  overflow: hidden auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .app-view {
@@ -106,6 +115,7 @@ body {
 }
 
 .app-view-home,
+.app-view-admin,
 .app-view-profile,
 .app-view-blog,
 .app-view-ask,
@@ -118,6 +128,7 @@ body {
 }
 
 .app-view-gallery,
+.app-view-admin,
 .app-view-guestbook,
 .app-view-likes,
 .app-view-profile,

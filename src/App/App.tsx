@@ -1,5 +1,6 @@
 import { lazy, Suspense, useContext, useEffect, useState } from 'react';
 
+import { AdminScreen } from 'components/AdminScreen';
 import { Background } from 'components/Background';
 import { Footer } from 'components/Footer';
 import { HomeScreen } from 'components/HomeScreen';
@@ -59,6 +60,12 @@ const ViewLoading = () => (
     <span aria-hidden="true" />
   </div>
 );
+
+const isAdminPath = () => {
+  if (typeof window === 'undefined') return false;
+
+  return window.location.pathname.replace(/\/+$/, '') === '/admin';
+};
 
 const AppViews = () => {
   const { activeView } = useContext(AppContext);
@@ -139,16 +146,32 @@ const AppViews = () => {
 };
 
 export const App = () => {
+  const [isAdminRoute, setIsAdminRoute] = useState(isAdminPath);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(
-    () =>
-      scheduleIdleTask(preloadTravelGlobe, {
+    () => {
+      if (process.env.NODE_ENV === 'test') return undefined;
+
+      return scheduleIdleTask(preloadTravelGlobe, {
         delay: 900,
         timeout: 1800,
-      }),
+      });
+    },
     [],
   );
+
+  useEffect(() => {
+    const updateRoute = () => {
+      setIsAdminRoute(isAdminPath());
+    };
+
+    window.addEventListener('popstate', updateRoute);
+
+    return () => {
+      window.removeEventListener('popstate', updateRoute);
+    };
+  }, []);
 
   useEffect(() => {
     const mediaQuery = '(max-width: 768px)';
@@ -169,14 +192,28 @@ export const App = () => {
   return (
     <AppProvider config={config} isMobile={isMobile}>
       <main className="app">
-        <div className={`app-shell${isMobile ? ' app-shell-mobile' : ''}`}>
-          {isMobile ? <MobileHeader /> : <Sidebar />}
-          <div className={`app-main${isMobile ? ' app-main-mobile' : ''}`}>
-            <Suspense fallback={<ViewLoading />}>
-              <AppViews />
-            </Suspense>
+        <div
+          className={`app-shell${isMobile ? ' app-shell-mobile' : ''}${
+            isAdminRoute ? ' app-shell-admin' : ''
+          }`}
+        >
+          {isAdminRoute ? null : isMobile ? <MobileHeader /> : <Sidebar />}
+          <div
+            className={`app-main${isMobile ? ' app-main-mobile' : ''}${
+              isAdminRoute ? ' app-main-admin' : ''
+            }`}
+          >
+            {isAdminRoute ? (
+              <div className="app-view app-view-admin" aria-label="Admin">
+                <AdminScreen />
+              </div>
+            ) : (
+              <Suspense fallback={<ViewLoading />}>
+                <AppViews />
+              </Suspense>
+            )}
           </div>
-          {isMobile ? <MobileNav /> : null}
+          {isMobile && !isAdminRoute ? <MobileNav /> : null}
         </div>
         <Background />
       </main>

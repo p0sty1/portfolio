@@ -1,4 +1,11 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
+import {
+  PointerEvent,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import styled from 'styled-components';
 
@@ -7,6 +14,24 @@ import { AppView, Theme } from 'types';
 
 const QUEUE_RADIUS = 3;
 const QUEUE_SPACING_REM = 4.18;
+const DRAG_ACTIVATION_PX = 8;
+const FLING_VELOCITY_PX_PER_MS = 0.42;
+
+interface DragState {
+  active: boolean;
+  moved: boolean;
+  pointerId: null | number;
+  startTime: number;
+  startX: number;
+}
+
+const EMPTY_DRAG_STATE: DragState = {
+  active: false,
+  moved: false,
+  pointerId: null,
+  startTime: 0,
+  startX: 0,
+};
 
 const Bar = styled.nav<{ $theme: Theme }>`
   position: relative;
@@ -26,10 +51,12 @@ const Track = styled.div`
   position: absolute;
   inset: 0;
   overflow: hidden;
+  touch-action: pan-y;
 `;
 
 const Tab = styled.button<{
   $active: boolean;
+  $dragging: boolean;
   $hiddenLabel: boolean;
   $theme: Theme;
 }>`
@@ -55,13 +82,16 @@ const Tab = styled.button<{
   font-weight: ${({ $active }) => ($active ? 700 : 500)};
   color: ${({ $active, $theme }) =>
     $active ? $theme.primaryTextColor : $theme.tertiaryTextColor};
-  touch-action: manipulation;
+  touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
   transition:
     background 0.15s ease,
     color 0.15s ease,
     opacity 0.22s ease,
-    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    ${({ $dragging }) =>
+      $dragging
+        ? 'none'
+        : 'transform 0.42s cubic-bezier(0.22, 1, 0.36, 1)'};
   will-change: transform;
 
   &:active {
@@ -90,9 +120,10 @@ const Tab = styled.button<{
   }
 `;
 
-const getQueueStyle = (offset: number) => {
-  const distance = Math.min(Math.abs(offset), 4);
-  const x = offset * QUEUE_SPACING_REM;
+const getQueueStyle = (offset: number, dragOffset: number) => {
+  const visualOffset = offset + dragOffset;
+  const distance = Math.min(Math.abs(visualOffset), 4);
+  const x = visualOffset * QUEUE_SPACING_REM;
   const scale = Math.max(0.74, 1 - distance * 0.06);
   const opacity = distance >= 4 ? 0.24 : Math.max(0.54, 1 - distance * 0.13);
 
@@ -107,6 +138,9 @@ const getQueueStyle = (offset: number) => {
 
 const positiveModulo = (value: number, count: number) =>
   ((value % count) + count) % count;
+
+const isDragPointerType = (pointerType: string) =>
+  pointerType === 'mouse' || pointerType === 'touch';
 
 const getNearestQueueIndex = (
   currentIndex: number,
@@ -138,6 +172,11 @@ export const MobileNav = () => {
     config.navItems.findIndex(({ view }) => view === activeNavView),
   );
   const [virtualActiveIndex, setVirtualActiveIndex] = useState(activeIndex);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [dragState, setDragState] = useState<DragState>(EMPTY_DRAG_STATE);
+  const dragStateRef = useRef<DragState>(EMPTY_DRAG_STATE);
+  const suppressNextClickRef = useRef(false);
+  const dragging = dragState.active && dragState.moved;
 
   useEffect(() => {
     setVirtualActiveIndex((currentIndex) =>
@@ -163,14 +202,112 @@ export const MobileNav = () => {
     });
   }, [config.navItems, itemCount, virtualActiveIndex]);
 
+  const updateDragState = (nextDragState: DragState) => {
+    dragStateRef.current = nextDragState;
+    setDragState(nextDragState);
+  };
+
+  const clearDrag = () => {
+    setDragOffset(0);
+    updateDragState(EMPTY_DRAG_STATE);
+  };
+
   const go = (view: AppView, queueIndex: number) => {
+    clearDrag();
     setVirtualActiveIndex(queueIndex);
     setActiveView(view);
   };
 
+  const settleDrag = (event: PointerEvent<HTMLElement>) => {
+    const currentDragState = dragStateRef.current;
+
+    if (
+      !currentDragState.active ||
+      currentDragState.pointerId !== event.pointerId
+    )
+      return;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    if (!currentDragState.moved) {
+      clearDrag();
+
+      return;
+    }
+
+    suppressNextClickRef.current = true;
+
+    const elapsed = Math.max(1, event.timeStamp - currentDragState.startTime);
+    const deltaX = event.clientX - currentDragState.startX;
+    const velocity = deltaX / elapsed;
+    const distanceSlots = -deltaX / (QUEUE_SPACING_REM * 16);
+    const velocitySlots =
+      Math.abs(velocity) >= FLING_VELOCITY_PX_PER_MS
+        ? -Math.sign(velocity)
+        : 0;
+    const slotOffset =
+      velocitySlots ||
+      Math.max(
+        -QUEUE_RADIUS,
+        Math.min(QUEUE_RADIUS, Math.round(distanceSlots)),
+      );
+    const nextQueueIndex = virtualActiveIndex + slotOffset;
+    const nextItem =
+      itemCount > 0
+        ? config.navItems[positiveModulo(nextQueueIndex, itemCount)]
+        : undefined;
+
+    clearDrag();
+
+    if (!nextItem || slotOffset === 0) return;
+
+    setVirtualActiveIndex(nextQueueIndex);
+    setActiveView(nextItem.view);
+  };
+
   return (
     <Bar data-v2="mobile-nav" $theme={theme} aria-label="底部导航">
-      <Track>
+      <Track
+        onPointerDown={(event) => {
+          if (!isDragPointerType(event.pointerType)) return;
+
+          event.currentTarget.setPointerCapture(event.pointerId);
+          setDragOffset(0);
+          updateDragState({
+            active: true,
+            moved: false,
+            pointerId: event.pointerId,
+            startTime: event.timeStamp,
+            startX: event.clientX,
+          });
+        }}
+        onPointerMove={(event) => {
+          const currentDragState = dragStateRef.current;
+
+          if (
+            !currentDragState.active ||
+            currentDragState.pointerId !== event.pointerId
+          )
+            return;
+
+          const deltaX = event.clientX - currentDragState.startX;
+          const moved =
+            currentDragState.moved || Math.abs(deltaX) >= DRAG_ACTIVATION_PX;
+
+          if (!moved) return;
+
+          event.preventDefault();
+          setDragOffset(deltaX / (QUEUE_SPACING_REM * 16));
+          updateDragState({
+            ...currentDragState,
+            moved,
+          });
+        }}
+        onPointerCancel={settleDrag}
+        onPointerUp={settleDrag}
+      >
         {queueItems.map(({ name, display, view, icon, offset, queueIndex }) => {
           const distance = Math.abs(offset);
           const active = queueIndex === virtualActiveIndex;
@@ -181,18 +318,35 @@ export const MobileNav = () => {
               type="button"
               data-v2={`nav-${name}`}
               $active={active}
+              $dragging={dragging}
               $hiddenLabel={distance >= 3}
               $theme={theme}
               aria-current={active ? 'page' : undefined}
               aria-label={display}
-              style={getQueueStyle(offset)}
-              onPointerDown={(event) => {
-                if (event.pointerType !== 'touch') return;
+              style={getQueueStyle(offset, dragOffset)}
+              onPointerUp={(event) => {
+                const currentDragState = dragStateRef.current;
 
+                if (
+                  !isDragPointerType(event.pointerType) ||
+                  !currentDragState.active ||
+                  currentDragState.pointerId !== event.pointerId ||
+                  currentDragState.moved
+                )
+                  return;
+
+                suppressNextClickRef.current = true;
                 event.preventDefault();
                 go(view, queueIndex);
               }}
-              onClick={() => {
+              onClick={(event) => {
+                if (suppressNextClickRef.current) {
+                  suppressNextClickRef.current = false;
+                  event.preventDefault();
+
+                  return;
+                }
+
                 go(view, queueIndex);
               }}
             >

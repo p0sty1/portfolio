@@ -12,13 +12,13 @@ import styled, { keyframes } from 'styled-components';
 
 import { AppContext } from 'App/AppContext';
 import { getSupabase } from 'lib/supabaseClient';
+import { TIMELINE_SECONDARY_PASSWORD } from 'lib/timelineAdminAuth';
 import { Theme } from 'types';
 
 const TABLE = 'portfolio_timeline_posts';
 const COMMENTS_TABLE = 'portfolio_timeline_comments';
 const MEDIA_BUCKET = 'portfolio-feed-media';
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
-const TIMELINE_SECONDARY_PASSWORD = 'Jyangb1y@';
 const TIMELINE_CLIENT_ID_STORAGE = 'portfolio-timeline-client-id-v1';
 
 type TimelineMediaType = 'image' | 'video';
@@ -47,6 +47,12 @@ interface TimelineEngagementRow {
   post_id: string;
   likes_count: number;
   liked_by_client: boolean;
+}
+
+interface TimelineFeedProps {
+  requirePublishPassword?: boolean;
+  showComposer?: boolean;
+  title?: string;
 }
 
 const isTimelineMediaType = (value: unknown): value is TimelineMediaType =>
@@ -857,7 +863,11 @@ const TimelinePostImage = ({ src }: { src: string }) => {
   );
 };
 
-export const TimelineFeed = () => {
+export const TimelineFeed = ({
+  requirePublishPassword = true,
+  showComposer = false,
+  title = '动态',
+}: TimelineFeedProps = {}) => {
   const { config, theme } = useContext(AppContext);
   const client = getSupabase();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -1112,6 +1122,12 @@ export const TimelineFeed = () => {
     event.preventDefault();
     if (!client || !canSubmit) return;
 
+    if (!requirePublishPassword) {
+      void publishPost();
+
+      return;
+    }
+
     setPassword('');
     setPasswordError(null);
     setConfirmOpen(true);
@@ -1298,96 +1314,100 @@ export const TimelineFeed = () => {
   return (
     <Shell data-v2="timeline-feed">
       <FeedTop $theme={theme}>
-        <FeedTitle $theme={theme}>动态</FeedTitle>
+        <FeedTitle $theme={theme}>{title}</FeedTitle>
       </FeedTop>
-      <Composer
-        $theme={theme}
-        data-v2="timeline-composer"
-        onSubmit={(event) => {
-          onSubmit(event);
-        }}
-      >
-        <ComposerHeader>
-          <Avatar
-            $theme={theme}
-            $hasImage={Boolean(avatarSrc)}
-            aria-hidden="true"
-          >
-            {avatarSrc ? (
-              <img src={avatarSrc} alt="" />
-            ) : (
-              config.avatar.initials
-            )}
-          </Avatar>
-          <ComposerMeta>
-            <Name $theme={theme}>{config.name.display}</Name>
-            <Handle $theme={theme}>Amateur In Everything</Handle>
-          </ComposerMeta>
-        </ComposerHeader>
-
-        <Textarea
+      {showComposer ? (
+        <Composer
           $theme={theme}
-          aria-label="动态文案"
-          maxLength={2000}
-          placeholder="今天发生了什么？"
-          value={body}
-          onChange={(event) => {
-            setBody(event.target.value);
+          data-v2="timeline-composer"
+          onSubmit={(event) => {
+            onSubmit(event);
           }}
-        />
-
-        {previewUrl && selectedMediaType ? (
-          <Preview $theme={theme}>
-            {selectedMediaType === 'image' ? (
-              <img src={previewUrl} alt="待发布媒体预览" />
-            ) : (
-              <video src={previewUrl} controls muted />
-            )}
-            <RemoveMedia
-              type="button"
+        >
+          <ComposerHeader>
+            <Avatar
               $theme={theme}
-              aria-label="移除媒体"
-              onClick={() => {
-                setFile(null);
-              }}
+              $hasImage={Boolean(avatarSrc)}
+              aria-hidden="true"
             >
-              ×
-            </RemoveMedia>
-          </Preview>
-        ) : null}
+              {avatarSrc ? (
+                <img src={avatarSrc} alt="" />
+              ) : (
+                config.avatar.initials
+              )}
+            </Avatar>
+            <ComposerMeta>
+              <Name $theme={theme}>{config.name.display}</Name>
+              <Handle $theme={theme}>Amateur In Everything</Handle>
+            </ComposerMeta>
+          </ComposerHeader>
 
-        {error ? (
-          <HelperText $theme={theme} $danger>
-            {error}
-          </HelperText>
-        ) : !client ? (
-          <HelperText $theme={theme}>
-            未连接 Supabase，动态暂时只能浏览。
-          </HelperText>
-        ) : null}
+          <Textarea
+            $theme={theme}
+            aria-label="动态文案"
+            maxLength={2000}
+            placeholder="今天发生了什么？"
+            value={body}
+            onChange={(event) => {
+              setBody(event.target.value);
+            }}
+          />
 
-        <ComposerActions>
-          <ActionGroup>
-            <GhostButton
-              type="button"
-              $theme={theme}
-              onClick={() => inputRef.current?.click()}
-            >
-              图片/视频
-            </GhostButton>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*,video/*"
-              hidden
-              onChange={onFileChange}
-            />
-          </ActionGroup>
-          <SubmitButton type="submit" $theme={theme} disabled={!canSubmit}>
-            {submitting ? '发布中' : '发布'}
-          </SubmitButton>
-        </ComposerActions>
-      </Composer>
+          {previewUrl && selectedMediaType ? (
+            <Preview $theme={theme}>
+              {selectedMediaType === 'image' ? (
+                <img src={previewUrl} alt="待发布媒体预览" />
+              ) : (
+                <video src={previewUrl} controls muted />
+              )}
+              <RemoveMedia
+                type="button"
+                $theme={theme}
+                aria-label="移除媒体"
+                onClick={() => {
+                  setFile(null);
+                }}
+              >
+                ×
+              </RemoveMedia>
+            </Preview>
+          ) : null}
+
+          {error ? (
+            <HelperText $theme={theme} $danger>
+              {error}
+            </HelperText>
+          ) : !client ? (
+            <HelperText $theme={theme}>
+              未连接 Supabase，动态暂时只能浏览。
+            </HelperText>
+          ) : null}
+
+          <ComposerActions>
+            <ActionGroup>
+              <GhostButton
+                type="button"
+                $theme={theme}
+                onClick={() => inputRef.current?.click()}
+              >
+                图片/视频
+              </GhostButton>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*,video/*"
+                hidden
+                onChange={onFileChange}
+              />
+            </ActionGroup>
+            <SubmitButton type="submit" $theme={theme} disabled={!canSubmit}>
+              {submitting ? '发布中' : '发布'}
+            </SubmitButton>
+          </ComposerActions>
+        </Composer>
+      ) : error ? (
+        <EmptyState $theme={theme}>{error}</EmptyState>
+      ) : null}
 
       {confirmOpen ? (
         <ConfirmOverlay role="presentation">
