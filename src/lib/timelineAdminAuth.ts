@@ -1,6 +1,7 @@
 const TIMELINE_ADMIN_UNLOCK_STORAGE = 'portfolio-timeline-admin-unlocked-v1';
 
-export const TIMELINE_SECONDARY_PASSWORD = 'Jyangb1y@';
+export const TIMELINE_SECONDARY_PASSWORD =
+  process.env.REACT_APP_TIMELINE_ADMIN_PASSWORD ?? '';
 
 export const isTimelineAdminUnlocked = () => {
   if (typeof window === 'undefined') return false;

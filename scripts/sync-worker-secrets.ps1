@@ -1,7 +1,8 @@
 # Copy environment variables from .env to the portfolio Worker (wrangler secrets).
 # Run after: npx wrangler login
-# Pages secrets to mirror: REACT_APP_SUPABASE_URL, REACT_APP_SUPABASE_ANON_KEY,
-#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (add the latter two to .env if missing).
+# Secrets to mirror into the portfolio Worker:
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, PORTFOLIO_ADMIN_PASSWORD.
+# REACT_APP_* values are build-time public browser config and are not uploaded.
 
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot\..
@@ -23,10 +24,9 @@ function Import-DotEnv {
 Import-DotEnv
 
 $keys = @(
-  "REACT_APP_SUPABASE_URL",
-  "REACT_APP_SUPABASE_ANON_KEY",
   "SUPABASE_URL",
-  "SUPABASE_SERVICE_ROLE_KEY"
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "PORTFOLIO_ADMIN_PASSWORD"
 )
 
 $lines = @()
