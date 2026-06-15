@@ -1,4 +1,13 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  type KeyboardEvent,
+  type PointerEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import styled from 'styled-components';
 
@@ -126,57 +135,155 @@ const CategoryTitle = styled.h2<{ $theme: Theme }>`
   color: ${({ $theme }) => $theme.tertiaryTextColor};
 `;
 
-const CardGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8.25rem, 1fr));
-  gap: 0.75rem;
-  width: 100%;
-
-  @media (width >= 769px) {
-    grid-template-columns: repeat(auto-fill, minmax(9rem, 10.5rem));
-  }
-`;
-
-const Card = styled.a<{ $clickable: boolean; $theme: Theme }>`
-  width: 100%;
-  min-width: 0;
-  text-decoration: none;
-  color: inherit;
-  border-radius: 16px;
-  border: 1px solid ${({ $theme }) => $theme.cardBorder};
-  background: ${({ $theme }) => $theme.cardBackground};
-  overflow: hidden;
-  box-shadow: ${({ $theme }) => $theme.glassShadow};
-  cursor: ${({ $clickable }) => ($clickable ? 'pointer' : 'default')};
-  pointer-events: ${({ $clickable }) => ($clickable ? 'auto' : 'none')};
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-
-  &:hover {
-    transform: ${({ $clickable }) =>
-      $clickable ? 'translateY(-2px)' : 'none'};
-    box-shadow: ${({ $clickable, $theme }) =>
-      $clickable ? $theme.glassShadowHover : $theme.glassShadow};
-  }
-
-  &:active {
-    transform: ${({ $clickable }) => ($clickable ? 'scale(0.98)' : 'none')};
-  }
-`;
-
-const CardImageWrap = styled.div<{ $theme: Theme }>`
+const FlowShell = styled.div`
   position: relative;
-  aspect-ratio: 5 / 7;
-  background: ${({ $theme }) => $theme.iconGlassBackground};
-  overflow: hidden;
+  width: 100%;
+`;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+const FlowViewport = styled.div<{ $dragging: boolean; $theme: Theme }>`
+  --likes-flow-cover-width: clamp(7.5rem, 20vw, 12.25rem);
+  --likes-flow-spacing: clamp(5.4rem, 15vw, 10.25rem);
+
+  position: relative;
+  height: clamp(19rem, 38vw, 26rem);
+  overflow: hidden;
+  outline: none;
+  user-select: none;
+  touch-action: pan-y;
+  cursor: ${({ $dragging }) => ($dragging ? 'grabbing' : 'grab')};
+  perspective: 1500px;
+  perspective-origin: center 42%;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 1.45rem;
+    height: 34%;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at center,
+      ${({ $theme }) => $theme.shadowColor} 0%,
+      transparent 68%
+    );
+    opacity: 0.5;
+    pointer-events: none;
   }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px ${({ $theme }) => $theme.accentColor};
+    border-radius: 12px;
+  }
+
+  @media (width <= 768px) {
+    --likes-flow-cover-width: clamp(6.6rem, 40vw, 9.25rem);
+    --likes-flow-spacing: clamp(4.25rem, 28vw, 6.9rem);
+
+    height: 18.25rem;
+  }
+`;
+
+const FlowItemButton = styled.button<{ $active: boolean; $theme: Theme }>`
+  position: absolute;
+  top: 41%;
+  left: 50%;
+  width: var(--likes-flow-cover-width);
+  aspect-ratio: 5 / 7;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible > div {
+    box-shadow:
+      0 0 0 2px ${({ $theme }) => $theme.accentColor},
+      ${({ $active }) =>
+        $active
+          ? '0 24px 60px rgba(0, 0, 0, 0.36)'
+          : '0 18px 42px rgba(0, 0, 0, 0.24)'};
+  }
+`;
+
+const FlowCover = styled.div<{ $active: boolean; $theme: Theme }>`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  transform-style: preserve-3d;
+  box-shadow: ${({ $active }) =>
+    $active
+      ? '0 24px 60px rgba(0, 0, 0, 0.36)'
+      : '0 18px 42px rgba(0, 0, 0, 0.24)'};
+  transition: box-shadow 0.24s ease;
+`;
+
+const CoverSurface = styled.div<{ $active: boolean; $theme: Theme }>`
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid
+    ${({ $active, $theme }) =>
+      $active ? $theme.cardHoverBorder : $theme.cardBorder};
+  border-radius: inherit;
+  background: ${({ $theme }) => $theme.iconGlassBackground};
+`;
+
+const CoverImage = styled.img`
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+`;
+
+const CoverSheen = styled.span`
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.05) 26%,
+    transparent 48%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+  pointer-events: none;
+`;
+
+const CoverReflection = styled.span<{ $active: boolean }>`
+  position: absolute;
+  top: calc(100% + 0.38rem);
+  left: 0;
+  width: 100%;
+  height: 54%;
+  border-radius: inherit;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(0.4px) brightness(0.72) saturate(0.9);
+  opacity: ${({ $active }) => ($active ? 0.52 : 0.32)};
+  pointer-events: none;
+  transform: scaleY(-1);
+  mask-image: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.28) 42%,
+    transparent 82%
+  );
+  -webkit-mask-image: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.28) 42%,
+    transparent 82%
+  );
 `;
 
 const ImagePlaceholder = styled.span<{ $theme: Theme }>`
@@ -185,43 +292,63 @@ const ImagePlaceholder = styled.span<{ $theme: Theme }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0.6rem;
   text-align: center;
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   line-height: 1.35;
   color: ${({ $theme }) => $theme.tertiaryTextColor};
 `;
 
-const CardBody = styled.div`
-  padding: 0.55rem 0.6rem 0.65rem;
+const ActiveMarker = styled.span<{ $theme: Theme }>`
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 0.48rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: ${({ $theme }) => $theme.primaryTextColor};
+  box-shadow: 0 0 16px ${({ $theme }) => $theme.shadowColor};
+  pointer-events: none;
 `;
 
-const CardTitle = styled.div<{ $theme: Theme }>`
-  font-size: 0.78rem;
-  font-weight: 600;
-  line-height: 1.3;
-  color: ${({ $theme }) => $theme.primaryTextColor};
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+const FlowInfo = styled.div`
+  min-height: 4.6rem;
+  margin-top: -0.25rem;
+  text-align: center;
 `;
 
-const CardSubtitle = styled.div<{ $theme: Theme }>`
-  margin-top: 0.2rem;
-  font-size: 0.65rem;
-  color: ${({ $theme }) => $theme.secondaryTextColor};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const CardNote = styled.span<{ $theme: Theme }>`
+const FlowTitle = styled.a<{ $clickable: boolean; $theme: Theme }>`
   display: inline-block;
-  margin-top: 0.3rem;
-  padding: 0.12rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.58rem;
+  max-width: min(30rem, 100%);
+  width: 100%;
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-size: clamp(0.96rem, 2.4vw, 1.16rem);
+  font-weight: 700;
+  line-height: 1.28;
+  text-decoration: none;
+  cursor: ${({ $clickable }) => ($clickable ? 'pointer' : 'default')};
+  pointer-events: ${({ $clickable }) => ($clickable ? 'auto' : 'none')};
+
+  &:hover {
+    text-decoration: ${({ $clickable }) => ($clickable ? 'underline' : 'none')};
+  }
+`;
+
+const FlowSubtitle = styled.div<{ $theme: Theme }>`
+  margin: 0.28rem auto 0;
+  max-width: min(28rem, 100%);
+  color: ${({ $theme }) => $theme.secondaryTextColor};
+  font-size: 0.78rem;
+  line-height: 1.4;
+`;
+
+const FlowNote = styled.span<{ $theme: Theme }>`
+  display: inline-flex;
+  margin-top: 0.48rem;
+  padding: 0.16rem 0.48rem;
+  border-radius: 6px;
+  font-size: 0.62rem;
+  line-height: 1.4;
   color: ${({ $theme }) => $theme.tertiaryTextColor};
   background: ${({ $theme }) => $theme.spotlightColor};
 `;
@@ -252,44 +379,74 @@ const resolveFavoriteImageUrl = (imageUrl: string): string => {
   return `${base}/media/${raw}`;
 };
 
+const clampIndex = (index: number, length: number) =>
+  Math.min(Math.max(index, 0), Math.max(length - 1, 0));
+
 const filterToCategory = (filter: FavoriteFilter): FavoriteCategory | null => {
   if (filter === '全部') return null;
 
   return FAVORITE_CATEGORIES.find((c) => c.filterLabel === filter)?.id ?? null;
 };
 
-const FavoriteCard = ({
+const getFavoriteHref = (item: FavoriteItem) =>
+  isExternalLink(item.link_url) ? item.link_url : undefined;
+
+const getFlowTransform = (
+  index: number,
+  currentIndex: number,
+  dragOffset: number,
+  dragging: boolean,
+) => {
+  const offset = index - currentIndex + (dragging ? dragOffset / 120 : 0);
+  const distance = Math.abs(offset);
+  const direction = distance === 0 ? 0 : offset / distance;
+  const xMultiplier = offset * (distance < 1 ? 0.9 : 1);
+  const rotation = distance < 0.08 ? 0 : -direction * 56;
+  const z = distance < 0.08 ? 220 : -82 * distance;
+  const scale = distance < 0.08 ? 1.18 : Math.max(0.72, 1.05 - distance * 0.06);
+  const opacity = distance <= 3 ? 1 : Math.max(0, 1 - (distance - 3) * 0.35);
+
+  return {
+    opacity,
+    transform: [
+      'translate(-50%, -50%)',
+      `translateX(calc(${String(xMultiplier)} * var(--likes-flow-spacing)))`,
+      `translateZ(${String(z)}px)`,
+      `rotateY(${String(rotation)}deg)`,
+      `scale(${String(scale)})`,
+    ].join(' '),
+    zIndex: Math.max(1, 1000 - Math.round(distance * 100)),
+  };
+};
+
+const FavoriteCoverImage = ({
   item,
+  active,
   theme,
 }: {
+  active: boolean;
   item: FavoriteItem;
   theme: Theme;
 }) => {
-  const href = isExternalLink(item.link_url) ? item.link_url : undefined;
   const imageSrc =
     resolveFavoriteImageUrl(item.image_url) || placeholderImage(item.id);
   const [imageBroken, setImageBroken] = useState(false);
+  const backgroundImage = `url(${JSON.stringify(imageSrc)})`;
+
+  useEffect(() => {
+    setImageBroken(false);
+  }, [imageSrc]);
 
   return (
-    <Card
-      key={item.id}
-      $clickable={Boolean(href)}
-      $theme={theme}
-      data-v2={`likes-card-${item.id}`}
-      href={href ?? '#'}
-      rel={href ? 'noopener noreferrer' : undefined}
-      target={href ? '_blank' : undefined}
-      onClick={(event) => {
-        if (!href) event.preventDefault();
-      }}
-    >
-      <CardImageWrap $theme={theme}>
+    <FlowCover $active={active} $theme={theme}>
+      <CoverSurface $active={active} $theme={theme}>
         {!imageBroken ? (
-          <img
+          <CoverImage
             src={imageSrc}
             alt={item.title}
             loading="lazy"
             decoding="async"
+            draggable={false}
             referrerPolicy="no-referrer"
             onError={() => {
               setImageBroken(true);
@@ -300,15 +457,228 @@ const FavoriteCard = ({
             海报加载失败
           </ImagePlaceholder>
         )}
-      </CardImageWrap>
-      <CardBody>
-        <CardTitle $theme={theme}>{item.title}</CardTitle>
-        {item.subtitle ? (
-          <CardSubtitle $theme={theme}>{item.subtitle}</CardSubtitle>
+        <CoverSheen />
+        {active ? <ActiveMarker $theme={theme} /> : null}
+      </CoverSurface>
+      {!imageBroken ? (
+        <CoverReflection
+          $active={active}
+          aria-hidden="true"
+          style={{ backgroundImage }}
+        />
+      ) : null}
+    </FlowCover>
+  );
+};
+
+const FavoriteCoverFlow = ({
+  items,
+  label,
+  sectionId,
+  theme,
+}: {
+  items: FavoriteItem[];
+  label: string;
+  sectionId: FavoriteCategory;
+  theme: Theme;
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(() =>
+    Math.floor(items.length / 2),
+  );
+  const [dragging, setDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const draggingRef = useRef(false);
+  const dragStartRef = useRef(0);
+  const didDragRef = useRef(false);
+  const lastOffsetRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const velocityRef = useRef(0);
+
+  useEffect(() => {
+    setCurrentIndex((index) => clampIndex(index, items.length));
+  }, [items.length]);
+
+  const currentItem = items[currentIndex];
+  const currentHref = currentItem ? getFavoriteHref(currentItem) : undefined;
+  const visibleItems = items
+    .map((item, index) => ({ index, item }))
+    .filter(({ index }) => Math.abs(index - currentIndex) <= 5);
+
+  const openItem = (item: FavoriteItem) => {
+    const href = getFavoriteHref(item);
+    if (href) window.open(href, '_blank', 'noopener,noreferrer');
+  };
+
+  const moveTo = (index: number) => {
+    setCurrentIndex(clampIndex(index, items.length));
+  };
+
+  const moveBy = (delta: number) => {
+    setCurrentIndex((index) => clampIndex(index + delta, items.length));
+  };
+
+  const startDrag = (clientX: number) => {
+    draggingRef.current = true;
+    didDragRef.current = false;
+    dragStartRef.current = clientX;
+    lastOffsetRef.current = 0;
+    lastTimeRef.current = performance.now();
+    velocityRef.current = 0;
+    setDragOffset(0);
+    setDragging(true);
+  };
+
+  const updateDrag = (clientX: number) => {
+    if (!draggingRef.current) return;
+
+    const now = performance.now();
+    const nextOffset = clientX - dragStartRef.current;
+    const elapsed = Math.max(now - lastTimeRef.current, 1);
+
+    velocityRef.current = (nextOffset - lastOffsetRef.current) / elapsed;
+    lastOffsetRef.current = nextOffset;
+    lastTimeRef.current = now;
+    didDragRef.current = didDragRef.current || Math.abs(nextOffset) > 5;
+    setDragOffset(nextOffset);
+  };
+
+  const endDrag = () => {
+    if (!draggingRef.current) return;
+
+    draggingRef.current = false;
+    setDragging(false);
+
+    const dragDistance = Math.abs(dragOffset);
+    const dragVelocity = Math.abs(velocityRef.current);
+    const threshold = 46;
+    const velocityThreshold = 0.42;
+
+    if (dragDistance > threshold || dragVelocity > velocityThreshold) {
+      const direction =
+        dragOffset < 0 || velocityRef.current < -velocityThreshold ? 1 : -1;
+      const distanceJumps = Math.floor(dragDistance / 125);
+      const velocityJumps = Math.floor(dragVelocity / 1.35);
+      const jumpCount = Math.min(3, Math.max(1, distanceJumps, velocityJumps));
+
+      setCurrentIndex((index) =>
+        clampIndex(index + direction * jumpCount, items.length),
+      );
+    }
+
+    setDragOffset(0);
+    velocityRef.current = 0;
+  };
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    startDrag(event.clientX);
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    if (Math.abs(event.clientX - dragStartRef.current) > 5) {
+      event.preventDefault();
+    }
+    updateDrag(event.clientX);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      moveBy(-1);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      moveBy(1);
+    } else if (event.key === 'Enter' && currentItem) {
+      event.preventDefault();
+      openItem(currentItem);
+    }
+  };
+
+  if (items.length === 0 || !currentItem) return null;
+
+  return (
+    <FlowShell data-v2={`likes-flow-${sectionId}`}>
+      <FlowViewport
+        $dragging={dragging}
+        $theme={theme}
+        aria-label={`${label}收藏滑动展示`}
+        role="group"
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+        onPointerCancel={endDrag}
+        onPointerDown={handlePointerDown}
+        onPointerLeave={endDrag}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
+      >
+        {visibleItems.map(({ index, item }) => {
+          const active = index === currentIndex;
+          const flowStyle = getFlowTransform(
+            index,
+            currentIndex,
+            dragOffset,
+            dragging,
+          );
+
+          return (
+            <FlowItemButton
+              key={item.id}
+              $active={active}
+              $theme={theme}
+              aria-label={active ? `${item.title}，当前` : item.title}
+              data-v2={`likes-flow-card-${item.id}`}
+              style={{
+                opacity: flowStyle.opacity,
+                pointerEvents:
+                  Math.abs(index - currentIndex) <= 4 ? 'auto' : 'none',
+                transform: flowStyle.transform,
+                transition: dragging
+                  ? 'none'
+                  : 'opacity 360ms ease, transform 420ms cubic-bezier(0.23, 1, 0.32, 1)',
+                zIndex: flowStyle.zIndex,
+              }}
+              type="button"
+              onClick={() => {
+                if (didDragRef.current) {
+                  didDragRef.current = false;
+
+                  return;
+                }
+
+                if (active) {
+                  openItem(item);
+                } else {
+                  moveTo(index);
+                }
+              }}
+            >
+              <FavoriteCoverImage active={active} item={item} theme={theme} />
+            </FlowItemButton>
+          );
+        })}
+      </FlowViewport>
+      <FlowInfo>
+        <FlowTitle
+          $clickable={Boolean(currentHref)}
+          $theme={theme}
+          href={currentHref ?? '#'}
+          rel={currentHref ? 'noopener noreferrer' : undefined}
+          target={currentHref ? '_blank' : undefined}
+          onClick={(event) => {
+            if (!currentHref) event.preventDefault();
+          }}
+        >
+          {currentItem.title}
+        </FlowTitle>
+        {currentItem.subtitle ? (
+          <FlowSubtitle $theme={theme}>{currentItem.subtitle}</FlowSubtitle>
         ) : null}
-        {item.note ? <CardNote $theme={theme}>{item.note}</CardNote> : null}
-      </CardBody>
-    </Card>
+        {currentItem.note ? (
+          <FlowNote $theme={theme}>{currentItem.note}</FlowNote>
+        ) : null}
+      </FlowInfo>
+    </FlowShell>
   );
 };
 
@@ -414,11 +784,12 @@ export const Likes = () => {
               {filter === '全部' ? (
                 <CategoryTitle $theme={theme}>{section.label}</CategoryTitle>
               ) : null}
-              <CardGrid>
-                {section.items.map((item) => (
-                  <FavoriteCard key={item.id} item={item} theme={theme} />
-                ))}
-              </CardGrid>
+              <FavoriteCoverFlow
+                items={section.items}
+                label={section.label}
+                sectionId={section.id}
+                theme={theme}
+              />
             </CategoryBlock>
           ))
         )}
