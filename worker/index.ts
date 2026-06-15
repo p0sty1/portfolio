@@ -180,12 +180,7 @@ async function handleAdminRequest(
 
     if (request.method === 'PATCH' && id) {
       return json({
-        item: await updateVisibility(
-          env,
-          'timeline-posts',
-          id,
-          await readJson(request),
-        ),
+        item: await updateTimelinePost(env, id, await readJson(request)),
       });
     }
 
@@ -467,6 +462,52 @@ async function updateVisibility(
   return firstRow(rows);
 }
 
+async function updateTimelinePost(
+  env: Env,
+  id: string,
+  body: JsonRecord,
+): Promise<unknown> {
+  const config = resourceConfig('timeline-posts');
+  const action = optionalTextField(body.action, 20);
+  const now = new Date().toISOString();
+  const update: JsonRecord = {
+    moderated_at: now,
+  };
+
+  if (typeof body.isFeatured === 'boolean') {
+    update.is_featured = body.isFeatured;
+  } else if (typeof body.is_featured === 'boolean') {
+    update.is_featured = body.is_featured;
+  }
+
+  if (action === 'hide') {
+    update.hidden_at = now;
+    update.status = 'hidden';
+  } else if (action === 'restore') {
+    update.deleted_at = null;
+    update.hidden_at = null;
+    update.status = 'published';
+  } else if (action) {
+    throw new HttpError(400, '不支持的动态操作。');
+  }
+
+  if (Object.keys(update).length === 1) {
+    throw new HttpError(400, '没有可更新的动态字段。');
+  }
+
+  const rows = await supabaseJson(env, config.table, {
+    body: update,
+    method: 'PATCH',
+    prefer: 'return=representation',
+    query: {
+      id: `eq.${id}`,
+      select: config.select,
+    },
+  });
+
+  return firstRow(rows);
+}
+
 async function softDelete(
   env: Env,
   resource: string,
@@ -522,7 +563,7 @@ async function createTimelinePost(
     prefer: 'return=representation',
     query: {
       select:
-        'id,site_id,body,media_url,media_path,media_type,status,created_at,hidden_at,deleted_at,moderated_at',
+        'id,site_id,body,media_url,media_path,media_type,is_featured,status,created_at,hidden_at,deleted_at,moderated_at',
     },
   });
 
@@ -549,7 +590,7 @@ function resourceConfig(resource: string) {
   if (resource === 'timeline-posts') {
     return {
       select:
-        'id,site_id,body,media_url,media_path,media_type,status,created_at,hidden_at,deleted_at,moderated_at',
+        'id,site_id,body,media_url,media_path,media_type,is_featured,status,created_at,hidden_at,deleted_at,moderated_at',
       table: 'portfolio_timeline_posts',
     };
   }

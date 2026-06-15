@@ -51,3 +51,8 @@ deploy-manifest.json
 
 # Wrangler local state
 .wrangler/
+
+# Android WebView build outputs
+android-webview/.gradle/
+android-webview/local.properties
+android-webview/**/build/

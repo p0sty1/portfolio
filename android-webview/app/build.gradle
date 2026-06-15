@@ -1,0 +1,45 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.jyangb1y.webview"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.jyangb1y.portfolio"
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    flavorDimensions "entry"
+
+    productFlavors {
+        publicApp {
+            dimension "entry"
+            applicationId "com.jyangb1y.portfolio"
+            resValue "string", "app_name", "JYang Portfolio"
+            resValue "color", "launcher_background", "#05070c"
+            buildConfigField "String", "START_URL", "\"https://jyangb1y.com\""
+        }
+
+        adminApp {
+            dimension "entry"
+            applicationId "com.jyangb1y.portfolio.admin"
+            resValue "string", "app_name", "JYang Admin"
+            resValue "color", "launcher_background", "#101827"
+            buildConfigField "String", "START_URL", "\"https://jyangb1y.com/admin\""
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

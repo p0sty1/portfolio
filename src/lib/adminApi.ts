@@ -58,6 +58,7 @@ export interface AdminTimelinePost {
   deleted_at: null | string;
   hidden_at: null | string;
   id: string;
+  is_featured: boolean;
   media_path: null | string;
   media_type: 'image' | 'video' | null;
   media_url: null | string;
@@ -198,6 +199,20 @@ export const setResourceVisibility = <T>(
     body: { action },
     method: 'PATCH',
   }).then((payload) => payload.item);
+
+export const setTimelinePostFeatured = (
+  password: string,
+  postId: string,
+  isFeatured: boolean,
+) =>
+  adminRequest<{ item: AdminTimelinePost }>(
+    password,
+    `/timeline-posts/${postId}`,
+    {
+      body: { isFeatured },
+      method: 'PATCH',
+    },
+  ).then((payload) => payload.item);
 
 export const deleteAdminResource = <T>(
   password: string,

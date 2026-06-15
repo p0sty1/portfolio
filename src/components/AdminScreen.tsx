@@ -28,6 +28,7 @@ import {
   fetchOverview,
   setQuestionVisibility,
   setResourceVisibility,
+  setTimelinePostFeatured,
   updateAdminSite,
 } from 'lib/adminApi';
 import { getSupabase } from 'lib/supabaseClient';
@@ -192,7 +193,10 @@ const Select = styled.select<{ $theme: Theme }>`
   font-size: 0.84rem;
 `;
 
-const Button = styled.button<{ $theme: Theme; $tone?: 'danger' | 'ghost' | 'primary'; }>`
+const Button = styled.button<{
+  $theme: Theme;
+  $tone?: 'danger' | 'ghost' | 'primary';
+}>`
   min-height: 2.35rem;
   padding: 0.62rem 0.8rem;
   border: 1px solid
@@ -413,21 +417,30 @@ const Empty = styled.div<{ $theme: Theme }>`
   font-size: 0.86rem;
 `;
 
-const Pill = styled.span<{ $kind?: 'hidden' | 'live' | 'pending'; $theme: Theme }>`
+const Pill = styled.span<{
+  $kind?: 'featured' | 'hidden' | 'live' | 'pending';
+  $theme: Theme;
+}>`
   display: inline-flex;
   align-items: center;
   min-height: 1.45rem;
   padding: 0 0.5rem;
   border: 1px solid
     ${({ $kind, $theme }) =>
-      $kind === 'pending' ? $theme.accentColor : $theme.cardBorder};
+      $kind === 'pending'
+        ? $theme.accentColor
+        : $kind === 'featured'
+          ? 'rgba(216, 155, 13, 0.45)'
+          : $theme.cardBorder};
   border-radius: 999px;
   color: ${({ $kind, $theme }) =>
     $kind === 'hidden'
       ? '#dc2626'
       : $kind === 'pending'
         ? $theme.accentColor
-        : $theme.secondaryTextColor};
+        : $kind === 'featured'
+          ? '#d89b0d'
+          : $theme.secondaryTextColor};
   font-size: 0.72rem;
   font-weight: 760;
 `;
@@ -642,9 +655,7 @@ export const AdminScreen = () => {
       await loadCurrent();
     } catch (operationError) {
       setError(
-        operationError instanceof Error
-          ? operationError.message
-          : '操作失败。',
+        operationError instanceof Error ? operationError.message : '操作失败。',
       );
     } finally {
       setOperationKey(null);
@@ -876,7 +887,10 @@ export const AdminScreen = () => {
 
   const renderTimelinePosts = () => (
     <Stack>
-      <Composer $theme={theme} onSubmit={(event) => void submitTimelinePost(event)}>
+      <Composer
+        $theme={theme}
+        onSubmit={(event) => void submitTimelinePost(event)}
+      >
         <SectionTitle $theme={theme}>发布动态</SectionTitle>
         <Textarea
           $theme={theme}
@@ -931,6 +945,11 @@ export const AdminScreen = () => {
               <Pill $theme={theme} $kind={statusKind(post.status)}>
                 {statusLabel(post.status)}
               </Pill>
+              {post.is_featured ? (
+                <Pill $theme={theme} $kind="featured">
+                  精选
+                </Pill>
+              ) : null}
               <span>{formatTime(post.created_at)}</span>
               {post.media_type ? <span>{post.media_type}</span> : null}
             </Meta>
@@ -939,6 +958,22 @@ export const AdminScreen = () => {
               <HelperText $theme={theme}>媒体：{post.media_url}</HelperText>
             ) : null}
             <Actions>
+              <Button
+                type="button"
+                $theme={theme}
+                disabled={Boolean(operationKey)}
+                onClick={() => {
+                  void runOperation(`post-feature-${post.id}`, async () => {
+                    await setTimelinePostFeatured(
+                      sessionPassword,
+                      post.id,
+                      !post.is_featured,
+                    );
+                  });
+                }}
+              >
+                {post.is_featured ? '取消精选' : '设为精选'}
+              </Button>
               <Button
                 type="button"
                 $theme={theme}
@@ -1012,7 +1047,10 @@ export const AdminScreen = () => {
     emptyLabel: string;
     items: T[];
     renderMeta: (item: T) => ReactNode;
-    resource: Exclude<AdminResource, 'guestbook' | 'questions' | 'timeline-posts'>;
+    resource: Exclude<
+      AdminResource,
+      'guestbook' | 'questions' | 'timeline-posts'
+    >;
   }) {
     return (
       <Stack>
@@ -1035,14 +1073,17 @@ export const AdminScreen = () => {
                   $theme={theme}
                   disabled={Boolean(operationKey)}
                   onClick={() => {
-                    void runOperation(`${resource}-hide-${comment.id}`, async () => {
-                      await setResourceVisibility<T>(
-                        sessionPassword,
-                        resource,
-                        comment.id,
-                        comment.status === 'hidden' ? 'restore' : 'hide',
-                      );
-                    });
+                    void runOperation(
+                      `${resource}-hide-${comment.id}`,
+                      async () => {
+                        await setResourceVisibility<T>(
+                          sessionPassword,
+                          resource,
+                          comment.id,
+                          comment.status === 'hidden' ? 'restore' : 'hide',
+                        );
+                      },
+                    );
                   }}
                 >
                   {comment.status === 'hidden' ? '恢复' : '隐藏'}
@@ -1053,13 +1094,16 @@ export const AdminScreen = () => {
                   $tone="danger"
                   disabled={Boolean(operationKey)}
                   onClick={() => {
-                    void runOperation(`${resource}-delete-${comment.id}`, async () => {
-                      await deleteAdminResource<T>(
-                        sessionPassword,
-                        resource,
-                        comment.id,
-                      );
-                    });
+                    void runOperation(
+                      `${resource}-delete-${comment.id}`,
+                      async () => {
+                        await deleteAdminResource<T>(
+                          sessionPassword,
+                          resource,
+                          comment.id,
+                        );
+                      },
+                    );
                   }}
                 >
                   删除
@@ -1334,8 +1378,9 @@ export const AdminScreen = () => {
                   <HelperText $theme={theme}>
                     {selectedSiteId === 'all'
                       ? '正在查看全部主页'
-                      : overview?.sites.find((site) => site.id === selectedSiteId)
-                          ?.title ?? '当前主页'}
+                      : (overview?.sites.find(
+                          (site) => site.id === selectedSiteId,
+                        )?.title ?? '当前主页')}
                   </HelperText>
                 </div>
                 {loading ? (
