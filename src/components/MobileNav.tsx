@@ -23,6 +23,10 @@ interface DragState {
   pointerId: null | number;
   startTime: number;
   startX: number;
+  tapTarget: null | {
+    queueIndex: number;
+    view: AppView;
+  };
 }
 
 const EMPTY_DRAG_STATE: DragState = {
@@ -31,6 +35,7 @@ const EMPTY_DRAG_STATE: DragState = {
   pointerId: null,
   startTime: 0,
   startX: 0,
+  tapTarget: null,
 };
 
 const Bar = styled.nav<{ $theme: Theme }>`
@@ -44,7 +49,10 @@ const Bar = styled.nav<{ $theme: Theme }>`
   box-sizing: border-box;
   overflow: hidden;
   border-top: 1px solid ${({ $theme }) => $theme.cardBorder};
-  background: ${({ $theme }) => $theme.cardBackground};
+  background:
+    ${({ $theme }) => $theme.glassInsetHighlight},
+    ${({ $theme }) => $theme.glassBackground};
+  box-shadow: ${({ $theme }) => $theme.glassShadow};
 `;
 
 const Track = styled.div`
@@ -82,6 +90,8 @@ const Tab = styled.button<{
   font-weight: ${({ $active }) => ($active ? 700 : 500)};
   color: ${({ $active, $theme }) =>
     $active ? $theme.primaryTextColor : $theme.tertiaryTextColor};
+  box-shadow: ${({ $active, $theme }) =>
+    $active ? $theme.glassShadowActive : 'none'};
   touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -89,9 +99,7 @@ const Tab = styled.button<{
     color 0.15s ease,
     opacity 0.22s ease,
     ${({ $dragging }) =>
-      $dragging
-        ? 'none'
-        : 'transform 0.42s cubic-bezier(0.22, 1, 0.36, 1)'};
+      $dragging ? 'none' : 'transform 0.42s cubic-bezier(0.22, 1, 0.36, 1)'};
   will-change: transform;
 
   &:active {
@@ -163,6 +171,28 @@ const getNearestQueueIndex = (
   return currentIndex + nextOffset;
 };
 
+const getTapTarget = (event: PointerEvent<HTMLElement>) => {
+  const eventTarget = event.target;
+
+  if (!(eventTarget instanceof Element)) return null;
+
+  const tab = eventTarget.closest<HTMLButtonElement>(
+    '[data-nav-queue-index][data-nav-view]',
+  );
+
+  if (!tab || !event.currentTarget.contains(tab)) return null;
+
+  const queueIndex = Number(tab.dataset.navQueueIndex);
+  const view = tab.dataset.navView as AppView | undefined;
+
+  if (!view || !Number.isFinite(queueIndex)) return null;
+
+  return {
+    queueIndex,
+    view,
+  };
+};
+
 export const MobileNav = () => {
   const { config, theme, activeView, setActiveView } = useContext(AppContext);
   const activeNavView = activeView === 'ideal-test' ? 'fun' : activeView;
@@ -232,8 +262,18 @@ export const MobileNav = () => {
     }
 
     if (!currentDragState.moved) {
-      clearDrag();
+      const tapTarget =
+        event.type === 'pointerup' ? currentDragState.tapTarget : null;
 
+      if (!tapTarget) {
+        clearDrag();
+
+        return;
+      }
+
+      suppressNextClickRef.current = true;
+      event.preventDefault();
+      go(tapTarget.view, tapTarget.queueIndex);
       return;
     }
 
@@ -244,9 +284,7 @@ export const MobileNav = () => {
     const velocity = deltaX / elapsed;
     const distanceSlots = -deltaX / (QUEUE_SPACING_REM * 16);
     const velocitySlots =
-      Math.abs(velocity) >= FLING_VELOCITY_PX_PER_MS
-        ? -Math.sign(velocity)
-        : 0;
+      Math.abs(velocity) >= FLING_VELOCITY_PX_PER_MS ? -Math.sign(velocity) : 0;
     const slotOffset =
       velocitySlots ||
       Math.max(
@@ -281,6 +319,7 @@ export const MobileNav = () => {
             pointerId: event.pointerId,
             startTime: event.timeStamp,
             startX: event.clientX,
+            tapTarget: getTapTarget(event),
           });
         }}
         onPointerMove={(event) => {
@@ -323,6 +362,8 @@ export const MobileNav = () => {
               $theme={theme}
               aria-current={active ? 'page' : undefined}
               aria-label={display}
+              data-nav-queue-index={queueIndex}
+              data-nav-view={view}
               style={getQueueStyle(offset, dragOffset)}
               onPointerUp={(event) => {
                 const currentDragState = dragStateRef.current;

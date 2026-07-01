@@ -18,7 +18,10 @@ const Aside = styled.aside<{ $theme: Theme }>`
   padding: 1.25rem 0.9rem 1rem;
   box-sizing: border-box;
   border-right: 1px solid ${({ $theme }) => $theme.cardBorder};
-  background: ${({ $theme }) => $theme.cardBackground};
+  background:
+    ${({ $theme }) => $theme.glassInsetHighlight},
+    ${({ $theme }) => $theme.glassBackground};
+  box-shadow: ${({ $theme }) => $theme.glassShadow};
 `;
 
 const LogoRow = styled.div`
@@ -54,8 +57,11 @@ const NavButton = styled.button<{ $active: boolean; $theme: Theme }>`
     $active ? $theme.primaryTextColor : $theme.secondaryTextColor};
   background: ${({ $active, $theme }) =>
     $active ? $theme.iconGlassBackground : 'transparent'};
+  box-shadow: ${({ $active, $theme }) =>
+    $active ? $theme.glassShadowActive : 'none'};
   transition:
     background 0.15s ease,
+    box-shadow 0.15s ease,
     color 0.15s ease,
     transform 0.15s ease;
 

@@ -63,11 +63,7 @@ const Heading = styled.h1<{ $theme: Theme }>`
 
 const Panel = styled.div<{ $theme: Theme }>`
   margin-top: 1rem;
-  padding: clamp(1.25rem, 3vw, 1.75rem);
-  border: 1px solid ${({ $theme }) => $theme.cardBorder};
-  border-radius: 16px;
-  background: ${({ $theme }) => $theme.cardBackground};
-  box-shadow: ${({ $theme }) => $theme.glassShadow};
+  padding: 0;
 `;
 
 const Muted = styled.p<{ $theme: Theme }>`
@@ -86,16 +82,16 @@ const Form = styled.form`
   display: flex;
   gap: 0.65rem;
   align-items: stretch;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.15rem;
 `;
 
 const Input = styled.input<{ $theme: Theme }>`
   flex: 1;
   min-width: 0;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 0.95rem;
   border-radius: 999px;
-  border: 1px solid ${({ $theme }) => $theme.glassBorder};
-  background: ${({ $theme }) => $theme.iconGlassBackground};
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  background: rgba(255, 255, 255, 0.065);
   color: ${({ $theme }) => $theme.primaryTextColor};
   font-size: 0.9rem;
   backdrop-filter: blur(12px);
@@ -124,8 +120,6 @@ const List = styled.ul<{ $theme: Theme }>`
   margin: 0;
   padding: 0;
   list-style: none;
-  max-height: min(52vh, 28rem);
-  overflow-y: auto;
   font-size: 0.9rem;
   line-height: 1.55;
   color: ${({ $theme }) => $theme.secondaryTextColor};

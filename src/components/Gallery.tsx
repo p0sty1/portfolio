@@ -5,11 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import styled from 'styled-components';
 
 import { AppContext } from 'App/AppContext';
-import {
-  type GalleryFilter,
-  galleryFilters,
-  galleryItems,
-} from 'data/galleryItems';
+import { galleryItems } from 'data/galleryItems';
 import { fetchGalleryItems } from 'lib/galleryApi';
 import { getSupabase } from 'lib/supabaseClient';
 import { Theme } from 'types';
@@ -70,41 +66,6 @@ const EmptyText = styled.p<{ $theme: Theme }>`
   color: ${({ $theme }) => $theme.tertiaryTextColor};
 `;
 
-const FilterRow = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.35rem;
-  margin: 1rem 0;
-  flex-shrink: 0;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-`;
-
-const FilterChip = styled.button<{ $active: boolean; $theme: Theme }>`
-  flex-shrink: 0;
-  padding: 0.45rem 0.95rem;
-  border-radius: 999px;
-  border: 1px solid
-    ${({ $active, $theme }) =>
-      $active ? $theme.primaryTextColor : $theme.glassBorder};
-  background: ${({ $active, $theme }) =>
-    $active ? $theme.primaryTextColor : $theme.cardBackground};
-  color: ${({ $active, $theme }) =>
-    $active ? $theme.cardBackground : $theme.secondaryTextColor};
-  font-size: 0.8rem;
-  font-weight: ${({ $active }) => ($active ? 600 : 400)};
-  cursor: pointer;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
-`;
-
 const ScrollBody = styled.div`
   flex: 1;
   min-height: 0;
@@ -126,11 +87,11 @@ const Masonry = styled.div`
 const Card = styled.article<{ $theme: Theme }>`
   break-inside: avoid;
   margin-bottom: 0.65rem;
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  background: ${({ $theme }) => $theme.cardBackground};
-  border: 1px solid ${({ $theme }) => $theme.cardBorder};
-  box-shadow: ${({ $theme }) => $theme.glassShadow};
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -138,7 +99,7 @@ const Card = styled.article<{ $theme: Theme }>`
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: ${({ $theme }) => $theme.glassShadowHover};
+    box-shadow: none;
   }
 
   &:active {
@@ -180,7 +141,7 @@ const PlaceholderLabel = styled.span<{ $theme: Theme }>`
 `;
 
 const CardBody = styled.div`
-  padding: 0.65rem 0.7rem 0.75rem;
+  padding: 0.55rem 0.15rem 0.75rem;
 `;
 
 const CardTitle = styled.h2<{ $theme: Theme }>`
@@ -210,11 +171,10 @@ const TagRow = styled.div`
 `;
 
 const Tag = styled.span<{ $theme: Theme }>`
-  padding: 0.15rem 0.45rem;
+  padding: 0.12rem 0;
   border-radius: 4px;
   font-size: 0.62rem;
   color: ${({ $theme }) => $theme.tertiaryTextColor};
-  background: ${({ $theme }) => $theme.spotlightColor};
 `;
 
 const LikeButton = styled.button<{ $liked: boolean; $theme: Theme }>`
@@ -264,12 +224,6 @@ const formatLikes = (n?: number) => {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
 
   return String(n);
-};
-
-const matchesFilter = (item: GalleryItem, filter: GalleryFilter) => {
-  if (filter === '全部') return true;
-
-  return item.tags.includes(filter);
 };
 
 const fallbackUuid = () => {
@@ -418,7 +372,6 @@ const GalleryCard = ({
 export const Gallery = () => {
   const { theme } = useContext(AppContext);
   const client = useMemo(() => getSupabase(), []);
-  const [filter, setFilter] = useState<GalleryFilter>('全部');
   const [items, setItems] = useState<GalleryItem[]>(galleryItems);
   const [likedItemIds, setLikedItemIds] = useState<Set<string>>(
     readLikedGalleryItems,
@@ -455,11 +408,6 @@ export const Gallery = () => {
       cancelled = true;
     };
   }, [client]);
-
-  const visibleItems = useMemo(
-    () => items.filter((item) => matchesFilter(item, filter)),
-    [items, filter],
-  );
 
   const onLike = async (itemId: string) => {
     if (!client || likedItemIds.has(itemId) || likingItemIds.has(itemId)) {
@@ -510,27 +458,9 @@ export const Gallery = () => {
         <Eyebrow $theme={theme}>Gallery / Images</Eyebrow>
         <Heading $theme={theme}>画廊</Heading>
       </RoomHeader>
-      <FilterRow role="tablist" aria-label="画廊分类">
-        {galleryFilters.map((chip) => (
-          <FilterChip
-            key={chip}
-            type="button"
-            role="tab"
-            aria-selected={filter === chip}
-            $active={filter === chip}
-            $theme={theme}
-            data-v2={`gallery-filter-${chip}`}
-            onClick={() => {
-              setFilter(chip);
-            }}
-          >
-            {chip}
-          </FilterChip>
-        ))}
-      </FilterRow>
       <ScrollBody>
         <Masonry>
-          {visibleItems.map((item) => (
+          {items.map((item) => (
             <GalleryCard
               key={item.id}
               item={item}
@@ -543,8 +473,8 @@ export const Gallery = () => {
             />
           ))}
         </Masonry>
-        {visibleItems.length === 0 ? (
-          <EmptyText $theme={theme}>No items in this filter.</EmptyText>
+        {items.length === 0 ? (
+          <EmptyText $theme={theme}>No gallery items yet.</EmptyText>
         ) : null}
       </ScrollBody>
     </Page>

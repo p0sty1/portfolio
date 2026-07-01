@@ -84,14 +84,3 @@ export const galleryItems: GalleryItem[] = [
     likes: 0,
   },
 ];
-
-export const galleryFilters = [
-  '全部',
-  '项目',
-  'UI',
-  '摄影',
-  '生活',
-  '动效',
-] as const;
-
-export type GalleryFilter = (typeof galleryFilters)[number];

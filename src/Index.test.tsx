@@ -1,4 +1,4 @@
-import { act } from 'react';
+import { act, useContext } from 'react';
 
 import {
   configure,
@@ -10,10 +10,11 @@ import {
 
 import '__mocks__/matchMedia';
 import { App } from 'App/App';
-import { AppProvider } from 'App/AppContext';
+import { AppContext, AppProvider } from 'App/AppContext';
 import { config } from 'App/config';
 import { themes } from 'appearance';
 import { Footer } from 'components';
+import { MobileNav } from 'components/MobileNav';
 import { HomeNavIcon } from 'icons/nav';
 
 jest.mock('react-globe.gl', () => {
@@ -28,6 +29,21 @@ jest.mock('react-globe.gl', () => {
 
 configure({ testIdAttribute: 'data-v2' });
 
+Object.defineProperties(HTMLElement.prototype, {
+  hasPointerCapture: {
+    configurable: true,
+    value: jest.fn(() => true),
+  },
+  releasePointerCapture: {
+    configurable: true,
+    value: jest.fn(),
+  },
+  setPointerCapture: {
+    configurable: true,
+    value: jest.fn(),
+  },
+});
+
 const mockState = {
   config: {
     ...config,
@@ -37,6 +53,38 @@ const mockState = {
   theme: themes.dark,
   activeView: 'home' as const,
   setActiveView: () => undefined,
+};
+
+const ActiveViewProbe = () => {
+  const { activeView } = useContext(AppContext);
+
+  return <output data-v2="active-view">{activeView}</output>;
+};
+
+const firePointer = (
+  element: HTMLElement,
+  type: 'pointerdown' | 'pointerup',
+  options: {
+    clientX: number;
+    pointerId: number;
+    pointerType: 'mouse' | 'touch';
+  },
+) => {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+
+  Object.defineProperties(event, {
+    clientX: {
+      value: options.clientX,
+    },
+    pointerId: {
+      value: options.pointerId,
+    },
+    pointerType: {
+      value: options.pointerType,
+    },
+  });
+
+  fireEvent(element, event);
 };
 
 describe('application tests', () => {
@@ -170,10 +218,24 @@ describe('application tests', () => {
     expect(screen.queryByTestId('toggle')).not.toBeInTheDocument();
   });
 
-  it('should use the app background', () => {
-    expect(screen.getByTestId('background')).toHaveStyle({
-      backgroundColor: '#f6f7f8',
+  it('should transition the app background with the active view', async () => {
+    const background = screen.getByTestId('background');
+
+    expect(background).toHaveAttribute('data-gradient-view', 'home');
+    expect(
+      background.querySelector('[data-gradient-layer="home"]'),
+    ).toBeInTheDocument();
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('nav-likes'));
     });
+
+    await waitFor(() => {
+      expect(background).toHaveAttribute('data-gradient-view', 'likes');
+    });
+    expect(
+      background.querySelector('[data-gradient-layer="likes"]'),
+    ).toBeInTheDocument();
   });
 
   it('should render full footer on guestbook view', () => {
@@ -187,6 +249,36 @@ describe('application tests', () => {
 });
 
 describe('app context tests', () => {
+  it('should switch mobile nav by tapping a captured tab', async () => {
+    await act(() =>
+      render(
+        <AppProvider config={mockState.config} isMobile={true}>
+          <MobileNav />
+          <ActiveViewProbe />
+        </AppProvider>,
+      ),
+    );
+
+    const navTrack = screen.getByTestId('mobile-nav').firstElementChild;
+
+    expect(navTrack).toBeInstanceOf(HTMLElement);
+
+    act(() => {
+      firePointer(screen.getByTestId('nav-profile'), 'pointerdown', {
+        clientX: 0,
+        pointerId: 1,
+        pointerType: 'touch',
+      });
+      firePointer(navTrack as HTMLElement, 'pointerup', {
+        clientX: 0,
+        pointerId: 1,
+        pointerType: 'touch',
+      });
+    });
+
+    expect(screen.getByTestId('active-view')).toHaveTextContent('profile');
+  });
+
   it('should render partial footer on mobile', async () => {
     await act(() =>
       render(

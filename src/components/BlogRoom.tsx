@@ -44,9 +44,9 @@ const RoomHeader = styled.header<{ $theme: Theme }>`
     position: absolute;
     inset: auto clamp(1.35rem, 4vw, 2.8rem) clamp(1.35rem, 4vw, 2.8rem) auto;
     width: min(18rem, 34vw);
-    height: 0.35rem;
+    height: 0.18rem;
     border-radius: 999px;
-    background: ${({ $theme }) => $theme.primaryTextColor};
+    background: rgba(248, 250, 252, 0.52);
   }
 `;
 
@@ -73,32 +73,33 @@ const Title = styled.h1<{ $theme: Theme }>`
 const ThemeBand = styled.div<{ $theme: Theme }>`
   display: inline-flex;
   margin-top: clamp(1.2rem, 3vw, 2rem);
-  padding: 0.7rem 0.9rem;
-  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  padding: 0;
+  border: 0;
   border-radius: 999px;
-  background: ${({ $theme }) => $theme.iconGlassBackground};
-  color: ${({ $theme }) => $theme.primaryTextColor};
+  background: transparent;
+  color: ${({ $theme }) => $theme.secondaryTextColor};
   font-size: 0.92rem;
   font-weight: 760;
 `;
 
 const Stack = styled.div`
   display: grid;
-  gap: 1.15rem;
+  gap: 0;
   margin-top: 1.25rem;
 `;
 
 const PostLink = styled.button<{ $theme: Theme }>`
   width: 100%;
-  min-height: 16rem;
+  min-height: 0;
   display: grid;
   align-content: space-between;
-  gap: 1.5rem;
-  padding: clamp(1.35rem, 4vw, 2.25rem);
-  border: 1px solid ${({ $theme }) => $theme.cardBorder};
-  border-radius: 8px;
-  background: ${({ $theme }) => $theme.cardBackground};
-  box-shadow: ${({ $theme }) => $theme.glassShadow};
+  gap: 1.1rem;
+  padding: clamp(1.2rem, 3vw, 1.8rem) 0;
+  border: 0;
+  border-bottom: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
   text-align: left;
   font: inherit;
@@ -108,13 +109,13 @@ const PostLink = styled.button<{ $theme: Theme }>`
     border-color 0.2s ease;
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateX(0.18rem);
     border-color: ${({ $theme }) => $theme.cardHoverBorder};
-    box-shadow: ${({ $theme }) => $theme.glassShadowHover};
+    box-shadow: none;
   }
 
   &:active {
-    transform: scale(0.985);
+    transform: translateX(0.08rem);
   }
 `;
 
@@ -155,10 +156,10 @@ const ReadMore = styled.span<{ $theme: Theme }>`
   justify-self: start;
   display: inline-flex;
   align-items: center;
-  padding: 0.65rem 0.9rem;
+  padding: 0;
   border-radius: 999px;
-  background: ${({ $theme }) => $theme.primaryTextColor};
-  color: ${({ $theme }) => $theme.cardBackground};
+  background: transparent;
+  color: ${({ $theme }) => $theme.accentColor};
   font-size: 0.9rem;
   font-weight: 780;
 `;
@@ -415,8 +416,8 @@ const CommentInput = styled.input<{ $theme: Theme }>`
   min-width: 0;
   padding: 0.9rem 1rem;
   border: 1px solid ${({ $theme }) => $theme.cardBorder};
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.065);
   color: ${({ $theme }) => $theme.primaryTextColor};
   font: inherit;
   font-size: 0.95rem;
@@ -428,8 +429,8 @@ const CommentInput = styled.input<{ $theme: Theme }>`
 
 const CommentSubmit = styled.button<{ $theme: Theme }>`
   padding: 0.9rem 1.15rem;
-  border: 1px solid ${({ $theme }) => $theme.primaryTextColor};
-  border-radius: 8px;
+  border: 0;
+  border-radius: 999px;
   background: ${({ $theme }) => $theme.primaryTextColor};
   color: ${({ $theme }) => $theme.cardBackground};
   cursor: pointer;

@@ -19,7 +19,10 @@ const Header = styled.header<{ $theme: Theme }>`
   padding: calc(0.55rem + env(safe-area-inset-top, 0px)) 1rem 0.55rem;
   box-sizing: border-box;
   border-bottom: 1px solid ${({ $theme }) => $theme.cardBorder};
-  background: ${({ $theme }) => $theme.cardBackground};
+  background:
+    ${({ $theme }) => $theme.glassInsetHighlight},
+    ${({ $theme }) => $theme.glassBackground};
+  box-shadow: ${({ $theme }) => $theme.glassShadow};
 `;
 
 export const MobileHeader = () => {

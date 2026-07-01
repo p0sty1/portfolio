@@ -1,28 +1,31 @@
 import { Themes } from 'types';
 
-// Neutral social-app palette.
+// Dark glass social-app palette.
 export const themes: Themes = {
   dark: {
     key: 'dark',
-    primaryTextColor: '#f5f5f5',
-    secondaryTextColor: '#c7c7c7',
-    tertiaryTextColor: '#858585',
-    background: '#101010',
-    accentColor: '#0a84ff',
-    cardBackground: '#171717',
-    cardBorder: 'rgba(255, 255, 255, 0.1)',
+    primaryTextColor: '#f8fafc',
+    secondaryTextColor: '#cbd5e1',
+    tertiaryTextColor: '#94a3b8',
+    background: '#05070d',
+    accentColor: '#7dd3fc',
+    cardBackground: 'rgba(7, 11, 20, 0.42)',
+    cardBorder: 'rgba(255, 255, 255, 0.08)',
     cardHoverBorder: 'rgba(255, 255, 255, 0.18)',
-    glassBackground: 'rgba(23, 23, 23, 0.86)',
-    glassBackgroundHover: 'rgba(255, 255, 255, 0.07)',
-    glassBorder: 'rgba(255, 255, 255, 0.1)',
-    glassShadow: '0 1px 0 rgba(255, 255, 255, 0.06) inset',
-    glassShadowHover: '0 12px 28px rgba(0, 0, 0, 0.24)',
-    glassShadowActive: '0 0 0 1px rgba(255, 255, 255, 0.14) inset',
-    glassInsetHighlight: 'none',
-    iconGlassBackground: 'rgba(255, 255, 255, 0.06)',
-    gridColor: 'rgba(255, 255, 255, 0.07)',
-    spotlightColor: 'rgba(10, 132, 255, 0.14)',
-    shadowColor: 'rgba(0, 0, 0, 0.22)',
+    glassBackground: 'rgba(6, 10, 18, 0.58)',
+    glassBackgroundHover: 'rgba(255, 255, 255, 0.075)',
+    glassBorder: 'rgba(255, 255, 255, 0.11)',
+    glassShadow:
+      '0 1px 0 rgba(255, 255, 255, 0.07) inset, 0 16px 44px rgba(0, 0, 0, 0.34)',
+    glassShadowHover:
+      '0 1px 0 rgba(255, 255, 255, 0.11) inset, 0 20px 58px rgba(0, 0, 0, 0.42)',
+    glassShadowActive: '0 0 0 1px rgba(125, 211, 252, 0.24) inset',
+    glassInsetHighlight:
+      'linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 44%)',
+    iconGlassBackground: 'rgba(255, 255, 255, 0.055)',
+    gridColor: 'rgba(255, 255, 255, 0.05)',
+    spotlightColor: 'rgba(125, 211, 252, 0.1)',
+    shadowColor: 'rgba(0, 0, 0, 0.58)',
   },
   light: {
     key: 'light',

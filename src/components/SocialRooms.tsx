@@ -1,4 +1,11 @@
-import { FormEvent, useCallback, useContext, useEffect, useState } from 'react';
+import {
+  FormEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import styled, { css } from 'styled-components';
 
@@ -9,6 +16,7 @@ import { Theme } from 'types';
 import { TravelMapRoom } from './TravelMapRoom';
 
 const ASK_TABLE = 'portfolio_anonymous_questions';
+const ASK_PAGE_SIZE = 5;
 
 interface AnonymousQuestionRow {
   id: string;
@@ -266,20 +274,89 @@ const Title = styled.h1<{ $theme: Theme }>`
   letter-spacing: 0;
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.55fr);
-  gap: 0.9rem;
-  margin-top: 1rem;
+const AskPage = styled(Page)`
+  max-width: 44rem;
+`;
 
-  @media (width <= 860px) {
-    grid-template-columns: 1fr;
+const AskHeader = styled.header`
+  padding: clamp(0.7rem, 2.5vw, 1rem) 0 0.25rem;
+`;
+
+const AskLayout = styled.div`
+  display: grid;
+  gap: clamp(1.1rem, 3vw, 1.55rem);
+  margin-top: clamp(0.85rem, 3vw, 1.25rem);
+`;
+
+const AskComposer = styled.section<{ $theme: Theme }>`
+  display: grid;
+  gap: 0.85rem;
+  padding: clamp(1rem, 3vw, 1.25rem) 0 clamp(1.15rem, 3vw, 1.4rem);
+  border-bottom: 1px solid ${({ $theme }) => $theme.cardBorder};
+`;
+
+const AskThreadList = styled.div`
+  display: grid;
+  gap: 0;
+`;
+
+const AskThreadCard = styled.article<{ $theme: Theme }>`
+  position: relative;
+  padding: clamp(1rem, 3vw, 1.25rem) 0;
+  border-bottom: 1px solid ${({ $theme }) => $theme.cardBorder};
+
+  &:first-child {
+    padding-top: 0.25rem;
   }
 `;
 
-const Stack = styled.div`
-  display: grid;
-  gap: 1rem;
+const AskMeta = styled.div<{ $theme: Theme }>`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin-bottom: 0.55rem;
+  color: ${({ $theme }) => $theme.tertiaryTextColor};
+  font-size: 0.76rem;
+`;
+
+const AskStatus = styled.span<{ $theme: Theme }>`
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  font-weight: 760;
+`;
+
+const AskPrompt = styled.p<{ $theme: Theme }>`
+  max-width: 34rem;
+  margin: 0;
+  color: ${({ $theme }) => $theme.secondaryTextColor};
+  font-size: 0.95rem;
+  line-height: 1.7;
+`;
+
+const AskPager = styled.nav<{ $theme: Theme }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.9rem;
+  color: ${({ $theme }) => $theme.tertiaryTextColor};
+  font-size: 0.78rem;
+`;
+
+const AskPagerButton = styled.button<{ $theme: Theme }>`
+  padding: 0.4rem 0;
+  border: 0;
+  background: transparent;
+  color: ${({ $theme }) => $theme.secondaryTextColor};
+  cursor: pointer;
+  font: inherit;
+  font-weight: 760;
+
+  &:disabled {
+    color: ${({ $theme }) => $theme.tertiaryTextColor};
+    cursor: not-allowed;
+    opacity: 0.48;
+  }
 `;
 
 const cardSurface = css<{ $theme: Theme }>`
@@ -717,20 +794,36 @@ const ContactLink = styled.a<{ $theme: Theme }>`
 
 const Form = styled.form`
   display: grid;
-  gap: 0.7rem;
-  margin-top: 1rem;
+  gap: 0.75rem;
 `;
 
 const TextArea = styled.textarea<{ $theme: Theme }>`
-  min-height: 9rem;
+  min-height: 7.5rem;
   resize: vertical;
-  padding: 1rem;
-  border: 1px solid ${({ $theme }) => $theme.cardBorder};
-  border-radius: 14px;
-  background: ${({ $theme }) => $theme.iconGlassBackground};
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.075);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 18px 44px rgba(0, 0, 0, 0.12);
   color: ${({ $theme }) => $theme.primaryTextColor};
   font: inherit;
   line-height: 1.6;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:focus {
+    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.12) inset,
+      0 0 0 3px rgba(125, 211, 252, 0.08),
+      0 18px 44px rgba(0, 0, 0, 0.16);
+  }
 
   &::placeholder {
     color: ${({ $theme }) => $theme.tertiaryTextColor};
@@ -739,17 +832,26 @@ const TextArea = styled.textarea<{ $theme: Theme }>`
 
 const Submit = styled.button<{ $theme: Theme }>`
   justify-self: start;
-  padding: 0.8rem 1.1rem;
-  border: 1px solid ${({ $theme }) => $theme.primaryTextColor};
+  min-height: 2.75rem;
+  padding: 0.72rem 1.05rem;
+  border: 0;
   border-radius: 999px;
   background: ${({ $theme }) => $theme.primaryTextColor};
   color: ${({ $theme }) => $theme.cardBackground};
   cursor: pointer;
   font: inherit;
   font-weight: 740;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
 
   &:disabled {
-    opacity: 0.45;
+    background: rgba(255, 255, 255, 0.24);
+    color: ${({ $theme }) => $theme.tertiaryTextColor};
     cursor: not-allowed;
   }
 `;
@@ -767,19 +869,16 @@ const Muted = styled.p<{ $theme: Theme }>`
 `;
 
 const AnswerBlock = styled.div<{ $answered?: boolean; $theme: Theme }>`
-  margin-top: 1rem;
-  padding: 0.85rem 0.95rem;
-  border-radius: 14px;
-  border: 1px solid
+  margin-top: 0.85rem;
+  padding: 0.15rem 0 0.1rem 0.85rem;
+  border-left: 2px solid
     ${({ $answered, $theme }) =>
-      $answered ? $theme.cardBorder : $theme.spotlightColor};
-  background: ${({ $answered, $theme }) =>
-    $answered ? $theme.glassBackground : $theme.spotlightColor};
+      $answered ? $theme.accentColor : $theme.cardBorder};
 `;
 
 const AnswerLabel = styled.span<{ $answered?: boolean; $theme: Theme }>`
   display: block;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.28rem;
   font-size: 0.72rem;
   font-weight: 700;
   color: ${({ $answered, $theme }) =>
@@ -847,11 +946,11 @@ const AskQuestionCard = ({ row }: { row: AnonymousQuestionRow }) => {
   const answered = isAnswered(row);
 
   return (
-    <Card $theme={theme} data-v2={`ask-card-${row.id}`}>
-      <PostMeta $theme={theme}>
-        <MoodBadge>提问</MoodBadge>
-        <span>提问 · {formatAskTime(row.created_at)}</span>
-      </PostMeta>
+    <AskThreadCard $theme={theme} data-v2={`ask-card-${row.id}`}>
+      <AskMeta $theme={theme}>
+        <AskStatus $theme={theme}>提问</AskStatus>
+        <span>{formatAskTime(row.created_at)}</span>
+      </AskMeta>
       <CardTitle $theme={theme}>{row.question}</CardTitle>
       <AnswerBlock $answered={answered} $theme={theme}>
         <AnswerLabel $answered={answered} $theme={theme}>
@@ -861,12 +960,12 @@ const AskQuestionCard = ({ row }: { row: AnonymousQuestionRow }) => {
           <>
             <AnswerBody $theme={theme}>{row.answer?.trim()}</AnswerBody>
             {row.answered_at ? (
-              <PostMeta
+              <AskMeta
                 $theme={theme}
-                style={{ marginTop: '0.55rem', marginBottom: 0 }}
+                style={{ marginTop: '0.45rem', marginBottom: 0 }}
               >
                 <span>回答 · {formatAskTime(row.answered_at)}</span>
-              </PostMeta>
+              </AskMeta>
             ) : null}
           </>
         ) : (
@@ -875,7 +974,7 @@ const AskQuestionCard = ({ row }: { row: AnonymousQuestionRow }) => {
           </AnswerBody>
         )}
       </AnswerBlock>
-    </Card>
+    </AskThreadCard>
   );
 };
 
@@ -918,23 +1017,21 @@ export const AnonymousInputBox = ({
 
   if (!client) {
     return (
-      <Card $theme={theme} data-v2="anonymous-input-box">
-        <CardTitle $theme={theme}>提问</CardTitle>
+      <AskComposer $theme={theme} data-v2="anonymous-input-box">
         <Muted $theme={theme}>
           未连接 Supabase：请在 .env.local 配置
           REACT_APP_SUPABASE_*，并在数据库执行 portfolio_anonymous_questions
           迁移。
         </Muted>
-      </Card>
+      </AskComposer>
     );
   }
 
   return (
-    <Card $theme={theme} data-v2="anonymous-input-box">
-      <CardTitle $theme={theme}>提问</CardTitle>
-      <Body $theme={theme}>
+    <AskComposer $theme={theme} data-v2="anonymous-input-box">
+      <AskPrompt $theme={theme}>
         写一个问题、一个推荐、一个秘密，或者一句没有上下文的话。
-      </Body>
+      </AskPrompt>
       {error ? <ErrorText>{error}</ErrorText> : null}
       <Form onSubmit={(event) => void onSubmit(event)}>
         <TextArea
@@ -956,7 +1053,7 @@ export const AnonymousInputBox = ({
           {loading ? '发送中…' : sent ? '已提交' : '发送提问'}
         </Submit>
       </Form>
-    </Card>
+    </AskComposer>
   );
 };
 
@@ -1011,6 +1108,7 @@ export const AskRoom = () => {
   const [rows, setRows] = useState<AnonymousQuestionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
+  const [questionPage, setQuestionPage] = useState(0);
 
   const load = useCallback(async () => {
     if (!client) {
@@ -1043,30 +1141,76 @@ export const AskRoom = () => {
     void load();
   }, [load]);
 
+  const pageCount = Math.max(1, Math.ceil(rows.length / ASK_PAGE_SIZE));
+  const visibleRows = useMemo(
+    () =>
+      rows.slice(
+        questionPage * ASK_PAGE_SIZE,
+        questionPage * ASK_PAGE_SIZE + ASK_PAGE_SIZE,
+      ),
+    [questionPage, rows],
+  );
+
+  useEffect(() => {
+    setQuestionPage((currentPage) => Math.min(currentPage, pageCount - 1));
+  }, [pageCount]);
+
   return (
-    <Page data-page-root data-v2="ask-room">
-      <RoomHeader $kind="ask" $theme={theme}>
+    <AskPage data-page-root data-v2="ask-room">
+      <AskHeader>
         <Eyebrow $theme={theme}>Ask Me Anything</Eyebrow>
         <Title $theme={theme}>提问</Title>
-      </RoomHeader>
-      <Grid>
+      </AskHeader>
+      <AskLayout>
         <AnonymousInputBox
           onSubmitted={() => {
+            setQuestionPage(0);
             void load();
           }}
         />
-        <Stack aria-label="提问列表">
+        <AskThreadList aria-label="提问列表">
           {error ? <ErrorText>{error}</ErrorText> : null}
           {loading ? (
             <Muted $theme={theme}>正在加载提问…</Muted>
           ) : rows.length === 0 ? (
             <Muted $theme={theme}>还没有提问，来做第一个吧。</Muted>
           ) : (
-            rows.map((row) => <AskQuestionCard key={row.id} row={row} />)
+            visibleRows.map((row) => <AskQuestionCard key={row.id} row={row} />)
           )}
-        </Stack>
-      </Grid>
-    </Page>
+          {!loading && rows.length > ASK_PAGE_SIZE ? (
+            <AskPager $theme={theme} aria-label="提问分页">
+              <AskPagerButton
+                type="button"
+                $theme={theme}
+                disabled={questionPage === 0}
+                onClick={() => {
+                  setQuestionPage((currentPage) =>
+                    Math.max(0, currentPage - 1),
+                  );
+                }}
+              >
+                上一页
+              </AskPagerButton>
+              <span>
+                第 {questionPage + 1} / {pageCount} 页
+              </span>
+              <AskPagerButton
+                type="button"
+                $theme={theme}
+                disabled={questionPage >= pageCount - 1}
+                onClick={() => {
+                  setQuestionPage((currentPage) =>
+                    Math.min(pageCount - 1, currentPage + 1),
+                  );
+                }}
+              >
+                下一页
+              </AskPagerButton>
+            </AskPager>
+          ) : null}
+        </AskThreadList>
+      </AskLayout>
+    </AskPage>
   );
 };
 

@@ -23,7 +23,7 @@ interface AppContextInterface extends AppProviderInterface {
 export const AppContext = createContext<AppContextInterface>({
   config: {} as Config,
   isMobile: false,
-  theme: themes.light,
+  theme: themes.dark,
   activeView: 'home',
   setActiveView: () => undefined,
 });
@@ -38,7 +38,7 @@ export const AppProvider = ({
   const value: AppContextInterface = {
     config,
     isMobile,
-    theme: themes.light,
+    theme: themes.dark,
     activeView,
     setActiveView,
   };

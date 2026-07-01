@@ -580,9 +580,14 @@ const Shell = styled.section<{ $theme: Theme }>`
   display: grid;
   gap: 0;
   overflow: hidden;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
   border-radius: 16px;
-  background: #fff;
+  background:
+    ${({ $theme }) => $theme.glassInsetHighlight},
+    ${({ $theme }) => $theme.glassBackground};
+  box-shadow: ${({ $theme }) => $theme.glassShadow};
+  backdrop-filter: blur(26px) saturate(145%);
+  -webkit-backdrop-filter: blur(26px) saturate(145%);
 
   @media (width <= 768px) {
     border-radius: 0;
