@@ -7,7 +7,3 @@ export const loadTravelGlobe = () => {
 
   return travelGlobePromise;
 };
-
-export const preloadTravelGlobe = () => {
-  void loadTravelGlobe();
-};

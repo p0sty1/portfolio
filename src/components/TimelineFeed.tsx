@@ -20,7 +20,11 @@ const TABLE = 'portfolio_timeline_posts';
 const COMMENTS_TABLE = 'portfolio_timeline_comments';
 const MEDIA_BUCKET = 'portfolio-feed-media';
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
+const TIMELINE_PAGE_SIZE = 12;
 const TIMELINE_CLIENT_ID_STORAGE = 'portfolio-timeline-client-id-v1';
+const TIMELINE_VIEW_THRESHOLD = 0.5;
+const TIMELINE_VIEW_DWELL_MS = 1500;
+const TIMELINE_VIEW_BATCH_MS = 350;
 const TIMELINE_POST_SELECT =
   'id, body, media_url, media_type, created_at, is_featured';
 const LEGACY_TIMELINE_POST_SELECT =
@@ -51,6 +55,7 @@ interface TimelinePostRow {
   likes_count: number;
   liked_by_client: boolean;
   comments_count: number;
+  metrics_loaded: boolean;
   views_count: number;
 }
 
@@ -212,6 +217,7 @@ const normalizePosts = (rows: unknown): TimelinePostRow[] => {
         likes_count: 0,
         liked_by_client: false,
         comments_count: 0,
+        metrics_loaded: false,
         views_count: 0,
       },
     ];
@@ -280,13 +286,6 @@ const normalizeEngagement = (rows: unknown): TimelineEngagementRow[] => {
   });
 };
 
-const groupCommentsByPost = (comments: TimelineCommentRow[]) =>
-  comments.reduce<Record<string, TimelineCommentRow[]>>((grouped, comment) => {
-    grouped[comment.post_id] = [...(grouped[comment.post_id] ?? []), comment];
-
-    return grouped;
-  }, {});
-
 const groupRepliesByParent = (comments: TimelineCommentRow[]) =>
   comments.reduce<{
     repliesByParent: Record<string, TimelineCommentRow[]>;
@@ -338,6 +337,15 @@ const withUpdatedPost = (
   postId: string,
   updater: (post: TimelinePostRow) => TimelinePostRow,
 ) => posts.map((post) => (post.id === postId ? updater(post) : post));
+
+const appendUniquePosts = (
+  current: TimelinePostRow[],
+  next: TimelinePostRow[],
+) => {
+  const knownIds = new Set(current.map((post) => post.id));
+
+  return [...current, ...next.filter((post) => !knownIds.has(post.id))];
+};
 
 const formatTime = (iso: string) => {
   try {
@@ -564,6 +572,12 @@ const loadingSpin = keyframes`
   }
 `;
 
+const loadingShimmer = keyframes`
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+`;
+
 const LoadingRing = styled.span<{ $size?: string }>`
   display: inline-block;
   width: ${({ $size }) => $size ?? '1rem'};
@@ -574,6 +588,10 @@ const LoadingRing = styled.span<{ $size?: string }>`
   flex: 0 0 auto;
   opacity: 0.84;
   animation: ${loadingSpin} 0.78s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
 const Shell = styled.section<{ $theme: Theme }>`
@@ -1138,6 +1156,11 @@ const PostImage = styled.img<{ $loaded: boolean }>`
   transition: opacity 0.22s ease;
 `;
 
+const PostVideo = styled.video<{ $loaded: boolean }>`
+  opacity: ${({ $loaded }) => ($loaded ? 1 : 0)};
+  transition: opacity 0.22s ease;
+`;
+
 const MediaLoadingLayer = styled.div<{ $visible: boolean }>`
   position: absolute;
   inset: 0;
@@ -1157,6 +1180,23 @@ const MediaLoadingLayer = styled.div<{ $visible: boolean }>`
   transition:
     opacity 0.18s ease,
     visibility 0.18s ease;
+  visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
+`;
+
+const MediaErrorLayer = styled.div<{ $visible: boolean }>`
+  position: absolute;
+  inset: 0;
+  display: grid;
+  min-height: inherit;
+  place-items: center;
+  padding: 1rem;
+  background: #050505;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.8rem;
+  font-weight: 680;
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  pointer-events: none;
+  transition: opacity 0.18s ease;
   visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
 `;
 
@@ -1531,8 +1571,173 @@ const EmptyState = styled.div<{ $theme: Theme }>`
 const EmptyStateContent = styled.span`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 0.55rem;
 `;
+
+const FeedSkeleton = styled.div<{ $theme: Theme }>`
+  display: grid;
+
+  .skeleton-card {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1rem;
+    border-bottom: 1px solid ${({ $theme }) => $theme.cardBorder};
+    background: ${({ $theme }) => $theme.cardBackground};
+  }
+
+  .skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .skeleton-copy {
+    display: grid;
+    width: min(14rem, 58%);
+    gap: 0.42rem;
+  }
+
+  .skeleton-block {
+    position: relative;
+    overflow: hidden;
+    border-radius: 999px;
+    background: ${({ $theme }) => $theme.iconGlassBackground};
+  }
+
+  .skeleton-block::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 18%,
+      rgba(255, 255, 255, 0.16) 48%,
+      transparent 78%
+    );
+    content: '';
+    transform: translate3d(-100%, 0, 0);
+    animation: ${loadingShimmer} 1.45s ease-in-out infinite;
+  }
+
+  .skeleton-avatar {
+    width: 2.85rem;
+    aspect-ratio: 1;
+    flex: 0 0 auto;
+  }
+
+  .skeleton-name {
+    width: 72%;
+    height: 0.8rem;
+  }
+
+  .skeleton-time {
+    width: 46%;
+    height: 0.62rem;
+  }
+
+  .skeleton-media {
+    width: 100%;
+    min-height: min(54vw, 17rem);
+    border-radius: 14px;
+  }
+
+  .skeleton-line {
+    width: 64%;
+    height: 0.72rem;
+  }
+
+  .skeleton-line-short {
+    width: 38%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-block::after {
+      animation: none;
+    }
+  }
+`;
+
+const LoadingAnnouncement = styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+`;
+
+const LoadMoreRow = styled.div<{ $theme: Theme }>`
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1rem;
+  border-top: 1px solid ${({ $theme }) => $theme.cardBorder};
+  background: ${({ $theme }) => $theme.cardBackground};
+`;
+
+const LoadMoreButton = styled.button<{ $theme: Theme }>`
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid ${({ $theme }) => $theme.cardBorder};
+  border-radius: 999px;
+  background: ${({ $theme }) => $theme.iconGlassBackground};
+  color: ${({ $theme }) => $theme.primaryTextColor};
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 760;
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover:not(:disabled) {
+    background: ${({ $theme }) => $theme.glassBackgroundHover};
+    transform: translate3d(0, -1px, 0);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.72;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ $theme }) => $theme.accentColor};
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+const TimelineFeedSkeleton = ({ theme }: { theme: Theme }) => (
+  <FeedSkeleton data-v2="timeline-skeleton" $theme={theme} aria-hidden="true">
+    {Array.from({ length: 3 }, (_, index) => (
+      <div className="skeleton-card" key={index}>
+        <div className="skeleton-header">
+          <span className="skeleton-block skeleton-avatar" />
+          <div className="skeleton-copy">
+            <span className="skeleton-block skeleton-name" />
+            <span className="skeleton-block skeleton-time" />
+          </div>
+        </div>
+        {index === 0 ? (
+          <span className="skeleton-block skeleton-media" />
+        ) : null}
+        <span className="skeleton-block skeleton-line" />
+        <span className="skeleton-block skeleton-line skeleton-line-short" />
+      </div>
+    ))}
+  </FeedSkeleton>
+);
 
 const ConfirmOverlay = styled.div`
   position: fixed;
@@ -1595,9 +1800,10 @@ const ConfirmActions = styled.div`
 
 const TimelinePostImage = ({ src }: { src: string }) => {
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   return (
-    <PostMedia $loading={!loaded}>
+    <PostMedia $loading={!loaded || failed}>
       <PostImage
         src={src}
         alt=""
@@ -1608,12 +1814,69 @@ const TimelinePostImage = ({ src }: { src: string }) => {
           setLoaded(true);
         }}
         onError={() => {
+          setFailed(true);
           setLoaded(true);
         }}
       />
       <MediaLoadingLayer $visible={!loaded} aria-hidden={loaded}>
         <LoadingRing $size="1.6rem" aria-hidden="true" />
       </MediaLoadingLayer>
+      <MediaErrorLayer $visible={failed} aria-hidden={!failed}>
+        媒体暂时无法加载
+      </MediaErrorLayer>
+    </PostMedia>
+  );
+};
+
+const TimelinePostVideo = ({ src }: { src: string }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [nearViewport, setNearViewport] = useState(
+    typeof IntersectionObserver === 'undefined',
+  );
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || typeof IntersectionObserver === 'undefined') return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setNearViewport(true);
+      },
+      { rootMargin: '480px 0px' },
+    );
+
+    observer.observe(video);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  return (
+    <PostMedia $loading={!loaded || failed}>
+      <PostVideo
+        ref={videoRef}
+        src={nearViewport ? src : undefined}
+        aria-label="动态视频"
+        controls
+        preload={nearViewport ? 'metadata' : 'none'}
+        $loaded={loaded}
+        onLoadedMetadata={() => {
+          setLoaded(true);
+        }}
+        onError={() => {
+          setFailed(true);
+          setLoaded(true);
+        }}
+      />
+      <MediaLoadingLayer $visible={!loaded} aria-hidden={loaded}>
+        <LoadingRing $size="1.6rem" aria-hidden="true" />
+      </MediaLoadingLayer>
+      <MediaErrorLayer $visible={failed} aria-hidden={!failed}>
+        视频暂时无法加载
+      </MediaErrorLayer>
     </PostMedia>
   );
 };
@@ -1627,6 +1890,13 @@ export const TimelineFeed = ({
   const client = getSupabase();
   const inputRef = useRef<HTMLInputElement>(null);
   const dateMenuRef = useRef<HTMLDivElement | null>(null);
+  const postListRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const requestIdRef = useRef(0);
+  const viewDwellTimersRef = useRef(new Map<string, number>());
+  const pendingViewPostIdsRef = useRef(new Set<string>());
+  const qualifiedViewPostIdsRef = useRef(new Set<string>());
+  const viewBatchTimerRef = useRef<null | number>(null);
   const avatarSrc = config.avatar.src?.trim();
   const [clientId] = useState(getTimelineClientId);
   const [body, setBody] = useState('');
@@ -1635,6 +1905,12 @@ export const TimelineFeed = ({
   const [posts, setPosts] = useState<TimelinePostRow[]>([]);
   const [commentsByPost, setCommentsByPost] = useState<
     Record<string, TimelineCommentRow[]>
+  >({});
+  const [commentsLoadedPostIds, setCommentsLoadedPostIds] = useState<
+    Record<string, boolean>
+  >({});
+  const [commentsLoadingPostIds, setCommentsLoadingPostIds] = useState<
+    Record<string, boolean>
   >({});
   const [expandedCommentPostIds, setExpandedCommentPostIds] = useState<
     Record<string, boolean>
@@ -1653,6 +1929,9 @@ export const TimelineFeed = ({
     null | string
   >(null);
   const [loading, setLoading] = useState(Boolean(client));
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<null | string>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<null | string>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -1717,6 +1996,7 @@ export const TimelineFeed = ({
       return matchesTypeFilter(post, typeFilter);
     });
   }, [posts, selectedDate, timeFilter, typeFilter]);
+  const renderedPostIds = filteredPosts.map((post) => post.id).join(',');
 
   const selectDateFilter = (nextDatePart: Partial<DateParts>) => {
     setSelectedDate((current) =>
@@ -1758,127 +2038,410 @@ export const TimelineFeed = ({
     };
   }, [isDateMenuOpen]);
 
-  const loadPosts = useCallback(async () => {
-    if (!client) {
-      setLoading(false);
+  const hydratePostMetrics = useCallback(
+    async (pagePosts: TimelinePostRow[]) => {
+      if (!client || pagePosts.length === 0) return;
 
-      return;
-    }
+      const postIds = pagePosts.map((post) => post.id);
+      const pagePostIds = new Set(postIds);
+      const [engagementResult, commentCountsResult] = await Promise.all([
+        client.rpc('get_timeline_post_engagement', {
+          p_client_id: clientId,
+        }),
+        client
+          .from(COMMENTS_TABLE)
+          .select('post_id')
+          .in('post_id', postIds)
+          .limit(1000),
+      ]);
 
-    setLoading(true);
-    setError(null);
+      const detailsError = engagementResult.error ?? commentCountsResult.error;
 
-    const postsWithFeaturedResult = await client
-      .from(TABLE)
-      .select(TIMELINE_POST_SELECT)
-      .order('created_at', { ascending: false })
-      .limit(80);
+      if (detailsError) {
+        setError(friendlySupabaseError(detailsError.message));
+      }
 
-    const postsResult = postsWithFeaturedResult.error?.message.includes(
-      'is_featured',
-    )
-      ? await client
-          .from(TABLE)
-          .select(LEGACY_TIMELINE_POST_SELECT)
-          .order('created_at', { ascending: false })
-          .limit(80)
-      : postsWithFeaturedResult;
+      const engagementByPost = new Map(
+        normalizeEngagement(engagementResult.data).map((row) => [
+          row.post_id,
+          row,
+        ]),
+      );
+      const commentCountByPost = new Map<string, number>();
 
-    if (postsResult.error) {
-      setLoading(false);
-      setError(friendlySupabaseError(postsResult.error.message));
+      if (Array.isArray(commentCountsResult.data)) {
+        commentCountsResult.data.forEach((row) => {
+          if (!row || typeof row !== 'object') return;
 
-      return;
-    }
+          const postId = (row as Record<string, unknown>).post_id;
+          if (typeof postId !== 'string') return;
 
-    const basePosts = normalizePosts(postsResult.data);
-    const postIds = basePosts.map((post) => post.id);
+          commentCountByPost.set(
+            postId,
+            (commentCountByPost.get(postId) ?? 0) + 1,
+          );
+        });
+      }
 
-    if (postIds.length === 0) {
-      setCommentsByPost({});
-      setPosts([]);
-      setLoading(false);
+      setPosts((current) =>
+        current.map((post) => {
+          if (!pagePostIds.has(post.id)) return post;
 
-      return;
-    }
-
-    await client.rpc('record_timeline_post_views', {
-      p_client_id: clientId,
-      p_post_ids: postIds,
-    });
-
-    const [engagementResult, commentsResult] = await Promise.all([
-      client.rpc('get_timeline_post_engagement', {
-        p_client_id: clientId,
-      }),
-      client
-        .from(COMMENTS_TABLE)
-        .select('id, post_id, parent_id, author_name, body, created_at')
-        .in('post_id', postIds)
-        .order('created_at', { ascending: true })
-        .limit(500),
-    ]);
-
-    setLoading(false);
-
-    if (engagementResult.error) {
-      setCommentsByPost({});
-      setPosts(basePosts);
-      setError(friendlySupabaseError(engagementResult.error.message));
-
-      return;
-    }
-
-    const engagementByPost = new Map(
-      normalizeEngagement(engagementResult.data).map((row) => [
-        row.post_id,
-        row,
-      ]),
-    );
-
-    if (commentsResult.error) {
-      setCommentsByPost({});
-      setPosts(
-        basePosts.map((post) => {
           const engagement = engagementByPost.get(post.id);
 
           return {
             ...post,
-            liked_by_client: engagement?.liked_by_client ?? false,
-            likes_count: engagement?.likes_count ?? 0,
-            views_count: engagement?.views_count ?? 0,
+            comments_count: commentCountByPost.get(post.id) ?? 0,
+            liked_by_client:
+              engagement?.liked_by_client ?? post.liked_by_client,
+            likes_count: engagement?.likes_count ?? post.likes_count,
+            metrics_loaded: true,
+            views_count: Math.max(
+              post.views_count,
+              engagement?.views_count ?? 0,
+            ),
           };
         }),
       );
-      setError(friendlySupabaseError(commentsResult.error.message));
+    },
+    [client, clientId],
+  );
+
+  const flushQueuedPostViews = useCallback(async () => {
+    if (!client || pendingViewPostIdsRef.current.size === 0) return;
+
+    const postIds = Array.from(pendingViewPostIdsRef.current);
+    pendingViewPostIdsRef.current.clear();
+
+    const viewResult = await client.rpc('record_timeline_post_views', {
+      p_client_id: clientId,
+      p_post_ids: postIds,
+    });
+
+    if (viewResult.error) {
+      setError(friendlySupabaseError(viewResult.error.message));
 
       return;
     }
 
-    const groupedComments = groupCommentsByPost(
-      normalizeComments(commentsResult.data),
-    );
+    const viewCountsByPost = new Map<string, number>();
 
-    setCommentsByPost(groupedComments);
-    setPosts(
-      basePosts.map((post) => {
-        const engagement = engagementByPost.get(post.id);
-        const comments = groupedComments[post.id] ?? [];
+    if (Array.isArray(viewResult.data)) {
+      viewResult.data.forEach((row) => {
+        if (!row || typeof row !== 'object') return;
 
-        return {
-          ...post,
-          comments_count: comments.length,
-          liked_by_client: engagement?.liked_by_client ?? false,
-          likes_count: engagement?.likes_count ?? 0,
-          views_count: engagement?.views_count ?? 0,
-        };
+        const record = row as Record<string, unknown>;
+        const postId = record.post_id;
+        const viewsCount = record.views_count;
+
+        if (typeof postId === 'string' && typeof viewsCount === 'number') {
+          viewCountsByPost.set(postId, viewsCount);
+        }
+      });
+    }
+
+    setPosts((current) =>
+      current.map((post) => {
+        const viewsCount = viewCountsByPost.get(post.id);
+
+        return viewsCount === undefined
+          ? post
+          : {
+              ...post,
+              views_count: Math.max(post.views_count, viewsCount),
+            };
       }),
     );
   }, [client, clientId]);
 
+  const queuePostView = useCallback(
+    (postId: string) => {
+      pendingViewPostIdsRef.current.add(postId);
+
+      if (viewBatchTimerRef.current !== null) return;
+
+      viewBatchTimerRef.current = window.setTimeout(() => {
+        viewBatchTimerRef.current = null;
+        void flushQueuedPostViews();
+      }, TIMELINE_VIEW_BATCH_MS);
+    },
+    [flushQueuedPostViews],
+  );
+
   useEffect(() => {
-    void loadPosts();
+    const postList = postListRef.current;
+
+    if (
+      !client ||
+      loading ||
+      !postList ||
+      typeof IntersectionObserver === 'undefined'
+    ) {
+      return undefined;
+    }
+
+    const dwellTimers = viewDwellTimersRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const postId = (entry.target as HTMLElement).dataset.postId;
+
+          if (!postId || qualifiedViewPostIdsRef.current.has(postId)) return;
+
+          if (
+            entry.isIntersecting &&
+            entry.intersectionRatio >= TIMELINE_VIEW_THRESHOLD
+          ) {
+            if (dwellTimers.has(postId)) return;
+
+            const timer = window.setTimeout(() => {
+              dwellTimers.delete(postId);
+
+              if (document.visibilityState !== 'visible') return;
+
+              qualifiedViewPostIdsRef.current.add(postId);
+              queuePostView(postId);
+            }, TIMELINE_VIEW_DWELL_MS);
+
+            dwellTimers.set(postId, timer);
+
+            return;
+          }
+
+          const timer = dwellTimers.get(postId);
+
+          if (timer !== undefined) {
+            window.clearTimeout(timer);
+            dwellTimers.delete(postId);
+          }
+        });
+      },
+      { threshold: [0, TIMELINE_VIEW_THRESHOLD, 1] },
+    );
+
+    postList
+      .querySelectorAll<HTMLElement>('[data-v2="timeline-post"][data-post-id]')
+      .forEach((post) => {
+        observer.observe(post);
+      });
+
+    return () => {
+      observer.disconnect();
+      dwellTimers.forEach((timer) => {
+        window.clearTimeout(timer);
+      });
+      dwellTimers.clear();
+    };
+  }, [client, loading, queuePostView, renderedPostIds]);
+
+  useEffect(
+    () => () => {
+      if (viewBatchTimerRef.current !== null) {
+        window.clearTimeout(viewBatchTimerRef.current);
+      }
+
+      viewDwellTimersRef.current.forEach((timer) => {
+        window.clearTimeout(timer);
+      });
+    },
+    [],
+  );
+
+  const loadPosts = useCallback(
+    async (append: boolean, cursor: null | string) => {
+      if (!client) {
+        setLoading(false);
+        setLoadingMore(false);
+
+        return;
+      }
+
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
+      const filterEnd =
+        timeFilter === 'beforeDate' ? getDateFilterEnd(selectedDate) : null;
+
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        setError(null);
+      }
+
+      let postsQuery = client
+        .from(TABLE)
+        .select(TIMELINE_POST_SELECT)
+        .order('created_at', { ascending: false })
+        .limit(TIMELINE_PAGE_SIZE + 1);
+
+      if (cursor) postsQuery = postsQuery.lt('created_at', cursor);
+      if (filterEnd)
+        postsQuery = postsQuery.lte('created_at', filterEnd.toISOString());
+      if (typeFilter === 'featured')
+        postsQuery = postsQuery.eq('is_featured', true);
+      if (typeFilter === 'image' || typeFilter === 'video')
+        postsQuery = postsQuery.eq('media_type', typeFilter);
+      if (typeFilter === 'text') postsQuery = postsQuery.is('media_type', null);
+
+      const postsResult = await postsQuery;
+      let postsError = postsResult.error;
+      let normalizedPosts = normalizePosts(postsResult.data);
+
+      if (
+        postsResult.error?.message.includes('is_featured') &&
+        typeFilter !== 'featured'
+      ) {
+        let legacyQuery = client
+          .from(TABLE)
+          .select(LEGACY_TIMELINE_POST_SELECT)
+          .order('created_at', { ascending: false })
+          .limit(TIMELINE_PAGE_SIZE + 1);
+
+        if (cursor) legacyQuery = legacyQuery.lt('created_at', cursor);
+        if (filterEnd)
+          legacyQuery = legacyQuery.lte('created_at', filterEnd.toISOString());
+        if (typeFilter === 'image' || typeFilter === 'video')
+          legacyQuery = legacyQuery.eq('media_type', typeFilter);
+        if (typeFilter === 'text')
+          legacyQuery = legacyQuery.is('media_type', null);
+
+        const legacyResult = await legacyQuery;
+
+        postsError = legacyResult.error;
+        normalizedPosts = normalizePosts(legacyResult.data);
+      }
+
+      if (requestId !== requestIdRef.current) return;
+
+      if (postsError) {
+        if (!append) {
+          setPosts([]);
+          setHasMore(false);
+          setNextCursor(null);
+        }
+        setLoading(false);
+        setLoadingMore(false);
+        setError(friendlySupabaseError(postsError.message));
+
+        return;
+      }
+
+      const pagePosts = normalizedPosts.slice(0, TIMELINE_PAGE_SIZE);
+      const lastPost = pagePosts[pagePosts.length - 1];
+
+      if (!append) {
+        setCommentsByPost({});
+        setCommentsLoadedPostIds({});
+        setCommentsLoadingPostIds({});
+        setExpandedCommentPostIds({});
+      }
+
+      setPosts((current) =>
+        append ? appendUniquePosts(current, pagePosts) : pagePosts,
+      );
+      setHasMore(normalizedPosts.length > TIMELINE_PAGE_SIZE);
+      setNextCursor(lastPost?.created_at ?? null);
+      setLoading(false);
+      setLoadingMore(false);
+
+      void hydratePostMetrics(pagePosts);
+    },
+    [client, hydratePostMetrics, selectedDate, timeFilter, typeFilter],
+  );
+
+  const loadMore = useCallback(() => {
+    if (loading || loadingMore || !hasMore || !nextCursor) return;
+
+    void loadPosts(true, nextCursor);
+  }, [hasMore, loadPosts, loading, loadingMore, nextCursor]);
+
+  useEffect(() => {
+    void loadPosts(false, null);
   }, [loadPosts]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (
+      !target ||
+      !hasMore ||
+      loading ||
+      loadingMore ||
+      typeof IntersectionObserver === 'undefined'
+    ) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) loadMore();
+      },
+      { rootMargin: '600px 0px' },
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMore, loadMore, loading, loadingMore]);
+
+  const loadComments = useCallback(
+    async (postId: string) => {
+      if (commentsLoadedPostIds[postId] || commentsLoadingPostIds[postId]) {
+        return;
+      }
+
+      if (!client) {
+        setCommentsLoadedPostIds((current) => ({
+          ...current,
+          [postId]: true,
+        }));
+
+        return;
+      }
+
+      setCommentsLoadingPostIds((current) => ({
+        ...current,
+        [postId]: true,
+      }));
+
+      const commentsResult = await client
+        .from(COMMENTS_TABLE)
+        .select('id, post_id, parent_id, author_name, body, created_at')
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true })
+        .limit(500);
+
+      setCommentsLoadingPostIds((current) => ({
+        ...current,
+        [postId]: false,
+      }));
+
+      if (commentsResult.error) {
+        setError(friendlySupabaseError(commentsResult.error.message));
+
+        return;
+      }
+
+      const comments = normalizeComments(commentsResult.data);
+
+      setCommentsByPost((current) => ({
+        ...current,
+        [postId]: comments,
+      }));
+      setCommentsLoadedPostIds((current) => ({
+        ...current,
+        [postId]: true,
+      }));
+      setPosts((current) =>
+        withUpdatedPost(current, postId, (post) => ({
+          ...post,
+          comments_count: comments.length,
+        })),
+      );
+    },
+    [client, commentsLoadedPostIds, commentsLoadingPostIds],
+  );
 
   useEffect(() => {
     if (!file) {
@@ -1973,7 +2536,10 @@ export const TimelineFeed = ({
       if (insertError) throw insertError;
 
       const [inserted] = normalizePosts([data]);
-      if (inserted) setPosts((current) => [inserted, ...current]);
+      if (inserted) {
+        setPosts((current) => [inserted, ...current]);
+        void hydratePostMetrics([inserted]);
+      }
       setBody('');
       setFile(null);
       setPassword('');
@@ -2283,7 +2849,7 @@ export const TimelineFeed = ({
             </SubmitButton>
           </ComposerActions>
         </Composer>
-      ) : error ? (
+      ) : error && posts.length > 0 ? (
         <EmptyState $theme={theme}>{error}</EmptyState>
       ) : null}
 
@@ -2460,16 +3026,31 @@ export const TimelineFeed = ({
         </FilterShell>
       ) : null}
 
-      <PostList aria-live="polite" aria-busy={loading}>
+      <PostList ref={postListRef} aria-live="polite" aria-busy={loading}>
         {loading ? (
-          <EmptyState $theme={theme}>
-            <EmptyStateContent>
-              <LoadingRing aria-hidden="true" />
-              动态加载中
-            </EmptyStateContent>
-          </EmptyState>
+          <>
+            <LoadingAnnouncement>动态加载中</LoadingAnnouncement>
+            <TimelineFeedSkeleton theme={theme} />
+          </>
         ) : posts.length === 0 ? (
-          <EmptyState $theme={theme}>还没有动态</EmptyState>
+          error ? (
+            <EmptyState $theme={theme}>
+              <EmptyStateContent>
+                <span>{error}</span>
+                <LoadMoreButton
+                  type="button"
+                  $theme={theme}
+                  onClick={() => {
+                    void loadPosts(false, null);
+                  }}
+                >
+                  重新加载
+                </LoadMoreButton>
+              </EmptyStateContent>
+            </EmptyState>
+          ) : (
+            <EmptyState $theme={theme}>还没有动态</EmptyState>
+          )
         ) : filteredPosts.length === 0 ? (
           <EmptyState $theme={theme}>没有符合筛选的动态</EmptyState>
         ) : (
@@ -2481,7 +3062,16 @@ export const TimelineFeed = ({
             const commentsPanelId = `timeline-comments-${post.id}`;
             const commentInputId = `timeline-comment-${post.id}`;
             const isCommentsOpen = Boolean(expandedCommentPostIds[post.id]);
-            const viewsLabel = formatMetricCount(post.views_count);
+            const commentsLabel = post.metrics_loaded
+              ? formatMetricCount(post.comments_count)
+              : '…';
+            const likesLabel = post.metrics_loaded
+              ? formatMetricCount(post.likes_count)
+              : '…';
+            const viewsLabel = post.metrics_loaded
+              ? formatMetricCount(post.views_count)
+              : '…';
+            const commentsLoading = Boolean(commentsLoadingPostIds[post.id]);
 
             return (
               <PostCard
@@ -2489,6 +3079,7 @@ export const TimelineFeed = ({
                 $featured={post.is_featured}
                 $theme={theme}
                 data-v2="timeline-post"
+                data-post-id={post.id}
               >
                 <PostHeader>
                   <Avatar
@@ -2513,9 +3104,7 @@ export const TimelineFeed = ({
                   post.media_type === 'image' ? (
                     <TimelinePostImage src={post.media_url} />
                   ) : (
-                    <PostMedia>
-                      <video src={post.media_url} controls preload="metadata" />
-                    </PostMedia>
+                    <TimelinePostVideo src={post.media_url} />
                   )
                 ) : null}
                 {post.body ? (
@@ -2541,6 +3130,7 @@ export const TimelineFeed = ({
                       }));
 
                       if (!isCommentsOpen) {
+                        void loadComments(post.id);
                         window.requestAnimationFrame(() => {
                           document.getElementById(commentInputId)?.focus();
                         });
@@ -2550,9 +3140,7 @@ export const TimelineFeed = ({
                     <EngagementIcon $theme={theme} $selected={isCommentsOpen}>
                       <CommentGlyph />
                     </EngagementIcon>
-                    <EngagementCount>
-                      {formatMetricCount(post.comments_count)}
-                    </EngagementCount>
+                    <EngagementCount>{commentsLabel}</EngagementCount>
                   </EngagementButton>
                   <EngagementButton
                     type="button"
@@ -2572,13 +3160,15 @@ export const TimelineFeed = ({
                     >
                       <HeartGlyph filled={post.liked_by_client} />
                     </EngagementIcon>
-                    <EngagementCount>
-                      {formatMetricCount(post.likes_count)}
-                    </EngagementCount>
+                    <EngagementCount>{likesLabel}</EngagementCount>
                   </EngagementButton>
                   <EngagementMetric
                     $theme={theme}
-                    aria-label={`${viewsLabel} 次浏览`}
+                    aria-label={
+                      post.metrics_loaded
+                        ? `${viewsLabel} 次浏览`
+                        : '浏览量加载中'
+                    }
                     role="img"
                   >
                     <EngagementIcon $theme={theme}>
@@ -2603,7 +3193,9 @@ export const TimelineFeed = ({
                     </EngagementIcon>
                   </EngagementMetric>
                 </PostActions>
-                {!isCommentsOpen && post.comments_count > 0 ? (
+                {!isCommentsOpen &&
+                post.metrics_loaded &&
+                post.comments_count > 0 ? (
                   <CommentPreviewButton
                     type="button"
                     $theme={theme}
@@ -2614,6 +3206,7 @@ export const TimelineFeed = ({
                         ...current,
                         [post.id]: true,
                       }));
+                      void loadComments(post.id);
                     }}
                   >
                     查看 {post.comments_count} 条评论
@@ -2625,7 +3218,14 @@ export const TimelineFeed = ({
                     $theme={theme}
                     aria-label="评论"
                   >
-                    {roots.length > 0 ? (
+                    {commentsLoading ? (
+                      <CommentEmptyHint $theme={theme}>
+                        <EmptyStateContent>
+                          <LoadingRing aria-hidden="true" />
+                          评论加载中
+                        </EmptyStateContent>
+                      </CommentEmptyHint>
+                    ) : roots.length > 0 ? (
                       <CommentList>
                         {roots.map((comment) =>
                           renderComment(post.id, comment, repliesByParent),
@@ -2646,8 +3246,11 @@ export const TimelineFeed = ({
                         id={commentInputId}
                         $theme={theme}
                         aria-label="评论内容"
+                        disabled={commentsLoading}
                         maxLength={500}
-                        placeholder="写评论…"
+                        placeholder={
+                          commentsLoading ? '评论加载中…' : '写评论…'
+                        }
                         value={commentDraft}
                         onChange={(event) => {
                           setCommentDrafts((current) => ({
@@ -2662,6 +3265,7 @@ export const TimelineFeed = ({
                         aria-label="发送评论"
                         disabled={
                           !commentDraft.trim() ||
+                          commentsLoading ||
                           submittingCommentKey === commentKey
                         }
                         title="发送评论"
@@ -2679,6 +3283,29 @@ export const TimelineFeed = ({
             );
           })
         )}
+        {!loading && posts.length > 0 && hasMore ? (
+          <LoadMoreRow
+            ref={loadMoreRef}
+            data-v2="timeline-load-more"
+            $theme={theme}
+          >
+            <LoadMoreButton
+              type="button"
+              $theme={theme}
+              disabled={loadingMore}
+              onClick={loadMore}
+            >
+              {loadingMore ? (
+                <>
+                  <LoadingRing aria-hidden="true" />
+                  正在加载更多
+                </>
+              ) : (
+                '加载更多'
+              )}
+            </LoadMoreButton>
+          </LoadMoreRow>
+        ) : null}
       </PostList>
     </Shell>
   );

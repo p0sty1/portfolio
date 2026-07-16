@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jyangbly iOS · Likes</title>
+    <link rel="stylesheet" href="../css/demo.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <main class="ios-stage">
+      <header class="ios-top">
+        <div>
+          <span class="eyebrow">taste vault</span>
+          <h1 class="phone-title">Likes</h1>
+        </div>
+        <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+          J
+        </button>
+      </header>
+
+      <section class="ios-content" data-filter-scope>
+        <article class="phone-panel phone-hero">
+          <span class="chip hot">curated shelf</span>
+          <h1>把喜欢的东西做成口袋展柜。</h1>
+          <p>音乐、影视、游戏都有自己的发光封面和筛选状态。</p>
+        </article>
+
+        <div class="filter-row">
+          <button class="tab-button is-active" type="button" data-filter="all">
+            全部
+          </button>
+          <button class="tab-button" type="button" data-filter="music">
+            音乐
+          </button>
+          <button class="tab-button" type="button" data-filter="film">
+            影视
+          </button>
+          <button class="tab-button" type="button" data-filter="game">
+            游戏
+          </button>
+        </div>
+
+        <article
+          class="artifact-card"
+          data-category="music"
+          style="--cover-a: oklch(74% 0.19 330); --cover-b: oklch(78% 0.16 190)"
+        >
+          <div class="cover-art"></div>
+          <h3>Night pop orbit</h3>
+          <p>给流行音乐收藏一个夜间舞台。</p>
+        </article>
+        <article
+          class="artifact-card"
+          data-category="film"
+          style="--cover-a: oklch(78% 0.16 82); --cover-b: oklch(70% 0.2 25)"
+        >
+          <div class="cover-art"></div>
+          <h3>Queer cinema room</h3>
+          <p>影视收藏像专题放映室，而不是海报堆。</p>
+        </article>
+        <article
+          class="artifact-card"
+          data-category="game"
+          style="--cover-a: oklch(72% 0.18 145); --cover-b: oklch(80% 0.16 210)"
+        >
+          <div class="cover-art"></div>
+          <h3>Game signal vault</h3>
+          <p>游戏收藏更适合像信号库一样浏览。</p>
+        </article>
+      </section>
+
+      <nav class="phone-nav" aria-label="iOS navigation">
+        <a href="ios-home.html">动态</a>
+        <a aria-current="page" href="ios-likes.html">Likes</a>
+        <a href="ios-blog.html">博客</a>
+        <a href="ios-ask.html">提问</a>
+      </nav>
+    </main>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

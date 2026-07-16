@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jyangbly Space · Blog</title>
+    <link rel="stylesheet" href="../css/demo.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="app-shell">
+      <aside class="sidebar glass" aria-label="个人空间导航">
+        <div class="identity">
+          <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+            J
+          </button>
+          <h1>Jyangbly Space</h1>
+          <p>博客是个人空间里的深夜阅读室。</p>
+        </div>
+        <nav class="nav">
+          <a class="nav-link" href="web-home.html">动态 <span>01</span></a>
+          <a class="nav-link" href="web-likes.html">Likes <span>02</span></a>
+          <a class="nav-link" aria-current="page" href="web-blog.html"
+            >博客 <span>03</span></a
+          >
+          <a class="nav-link" href="web-ask.html">提问 <span>04</span></a>
+        </nav>
+      </aside>
+
+      <header class="top-mobile glass">
+        <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+          J
+        </button>
+        <nav class="mobile-nav-inline" aria-label="移动导航">
+          <a href="web-home.html">动态</a>
+          <a href="web-likes.html">Likes</a>
+          <a aria-current="page" href="web-blog.html">博客</a>
+          <a href="web-ask.html">提问</a>
+        </nav>
+      </header>
+
+      <main class="main">
+        <section class="panel glass">
+          <div class="section-head">
+            <div>
+              <h2>博客阅读室</h2>
+              <p>
+                点击左侧文章，右侧阅读器会切换内容。真实产品里可以接你的
+                Markdown 博客。
+              </p>
+            </div>
+          </div>
+
+          <div class="blog-grid">
+            <div class="blog-list" data-blog-list="web-reader">
+              <button
+                class="blog-card is-active"
+                type="button"
+                data-blog
+                data-title="如何把个人主页做成一座可以逛的房子"
+                data-meta="Design note · 7 min read"
+                data-body="把个人主页做成社交空间以后，页面不再只是履历，而是由动态、收藏、博客和提问组成的生活界面。重点是给每个模块不同的空间气质，同时保持同一个品牌母题。"
+              >
+                <span class="chip hot">design note</span>
+                <h3>如何把个人主页做成一座可以逛的房子</h3>
+                <p>从作品集到个人空间的转向。</p>
+              </button>
+              <button
+                class="blog-card"
+                type="button"
+                data-blog
+                data-title="黑色界面为什么容易变廉价，以及怎么避免"
+                data-meta="UI diary · 5 min read"
+                data-body="高端黑不是把背景改成 #000。需要有层次的深色、透明度、玻璃边界、克制的发光色，以及足够清楚的信息层级。"
+              >
+                <span class="chip">UI diary</span>
+                <h3>黑色界面为什么容易变廉价，以及怎么避免</h3>
+                <p>深色玻璃拟态的克制方法。</p>
+              </button>
+              <button
+                class="blog-card"
+                type="button"
+                data-blog
+                data-title="我喜欢的东西，应该如何成为主页的一部分"
+                data-meta="Personal archive · 6 min read"
+                data-body="Likes 不应该只是数据库表的输出，它可以成为审美档案：唱片、电影、游戏和旅行都可以有自己的展示语言。"
+              >
+                <span class="chip">archive</span>
+                <h3>我喜欢的东西，应该如何成为主页的一部分</h3>
+                <p>收藏模块的版式节奏。</p>
+              </button>
+            </div>
+
+            <article class="reader glass" data-reader="web-reader">
+              <div class="reader-meta">
+                <span class="chip hot" data-reader-meta
+                  >Design note · 7 min read</span
+                >
+                <span class="chip">夜间阅读模式</span>
+              </div>
+              <h2 data-reader-title>如何把个人主页做成一座可以逛的房子</h2>
+              <p data-reader-body>
+                把个人主页做成社交空间以后，页面不再只是履历，而是由动态、收藏、博客和提问组成的生活界面。重点是给每个模块不同的空间气质，同时保持同一个品牌母题。
+              </p>
+              <div class="blog-actions">
+                <button class="button primary" type="button">收藏这篇</button>
+                <a class="button" href="web-ask.html">看完提问</a>
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <aside class="right-rail">
+        <section class="rail-card glass">
+          <h2>阅读氛围</h2>
+          <p>博客页不做普通列表，用“文章队列 + 大阅读器”建立阅读空间感。</p>
+          <div class="orbit-meter" aria-hidden="true"></div>
+        </section>
+      </aside>
+    </div>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jyangbly Space · Likes</title>
+    <link rel="stylesheet" href="../css/demo.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="app-shell">
+      <aside class="sidebar glass" aria-label="个人空间导航">
+        <div class="identity">
+          <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+            J
+          </button>
+          <h1>Jyangbly Space</h1>
+          <p>收藏不是列表，是一个能看出品味和人格的展柜。</p>
+        </div>
+        <nav class="nav">
+          <a class="nav-link" href="web-home.html">动态 <span>01</span></a>
+          <a class="nav-link" aria-current="page" href="web-likes.html"
+            >Likes <span>02</span></a
+          >
+          <a class="nav-link" href="web-blog.html">博客 <span>03</span></a>
+          <a class="nav-link" href="web-ask.html">提问 <span>04</span></a>
+        </nav>
+      </aside>
+
+      <header class="top-mobile glass">
+        <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+          J
+        </button>
+        <nav class="mobile-nav-inline" aria-label="移动导航">
+          <a href="web-home.html">动态</a>
+          <a aria-current="page" href="web-likes.html">Likes</a>
+          <a href="web-blog.html">博客</a>
+          <a href="web-ask.html">提问</a>
+        </nav>
+      </header>
+
+      <main class="main">
+        <section class="hero-card glass">
+          <div class="hero-content">
+            <span class="eyebrow"
+              ><span class="live-dot"></span> taste archive</span
+            >
+            <h1 class="hero-title">把喜欢的东西摆成一座夜间美术馆。</h1>
+            <p class="hero-copy">
+              音乐、电影、游戏和角色不再只是卡片，而是能被筛选、点亮、收藏的个人品味轨迹。
+            </p>
+          </div>
+          <div class="hero-side">
+            <div class="holo-stat">
+              <span class="metric-label">albums</span
+              ><span class="metric-value">48</span>
+            </div>
+            <div class="holo-stat">
+              <span class="metric-label">films</span
+              ><span class="metric-value">36</span>
+            </div>
+            <div class="holo-stat">
+              <span class="metric-label">games</span
+              ><span class="metric-value">12</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel glass" data-filter-scope>
+          <div class="section-head">
+            <div>
+              <h2>Likes 陈列</h2>
+              <p>用封面感、发光边界和筛选状态，强化“这是你的审美档案”。</p>
+            </div>
+            <div class="filter-row" aria-label="收藏筛选">
+              <button
+                class="tab-button is-active"
+                type="button"
+                data-filter="all"
+              >
+                全部
+              </button>
+              <button class="tab-button" type="button" data-filter="music">
+                音乐
+              </button>
+              <button class="tab-button" type="button" data-filter="film">
+                影视
+              </button>
+              <button class="tab-button" type="button" data-filter="game">
+                游戏
+              </button>
+            </div>
+          </div>
+
+          <div class="artifact-grid">
+            <article
+              class="artifact-card"
+              data-category="music"
+              style="
+                --cover-a: oklch(74% 0.19 330);
+                --cover-b: oklch(78% 0.16 190);
+                --cover-glow: oklch(74% 0.19 330 / 0.28);
+              "
+            >
+              <div class="cover-art"></div>
+              <h3>Night pop orbit</h3>
+              <p>适合放 Gaga、Lorde、Troye 这一类带夜色和舞台感的专辑。</p>
+              <div class="post-actions">
+                <span class="chip hot">album shelf</span
+                ><button class="like-button" type="button" data-like>
+                  点亮 <span data-like-count>29</span>
+                </button>
+              </div>
+            </article>
+            <article
+              class="artifact-card"
+              data-category="film"
+              style="
+                --cover-a: oklch(78% 0.16 82);
+                --cover-b: oklch(70% 0.2 25);
+                --cover-glow: oklch(78% 0.16 82 / 0.24);
+              "
+            >
+              <div class="cover-art"></div>
+              <h3>Queer cinema room</h3>
+              <p>电影收藏可以更像专题房间，而不是无差别海报墙。</p>
+              <div class="post-actions">
+                <span class="chip">film note</span
+                ><button class="like-button" type="button" data-like>
+                  点亮 <span data-like-count>17</span>
+                </button>
+              </div>
+            </article>
+            <article
+              class="artifact-card"
+              data-category="game"
+              style="
+                --cover-a: oklch(72% 0.18 145);
+                --cover-b: oklch(80% 0.16 210);
+                --cover-glow: oklch(72% 0.18 145 / 0.24);
+              "
+            >
+              <div class="cover-art"></div>
+              <h3>Game signal vault</h3>
+              <p>游戏和二次元收藏用“信号库”表达，会比普通网格更酷。</p>
+              <div class="post-actions">
+                <span class="chip">game vault</span
+                ><button class="like-button" type="button" data-like>
+                  点亮 <span data-like-count>22</span>
+                </button>
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <aside class="right-rail">
+        <section class="rail-card glass">
+          <h2>陈列逻辑</h2>
+          <p>
+            每类收藏都应该有自己的节奏：音乐像唱片墙，电影像夜场放映，游戏像成就库。
+          </p>
+          <div class="orbit-meter" aria-hidden="true"></div>
+        </section>
+      </aside>
+    </div>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

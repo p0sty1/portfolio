@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jyangbly iOS · Blog</title>
+    <link rel="stylesheet" href="../css/demo.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <main class="ios-stage">
+      <header class="ios-top">
+        <div>
+          <span class="eyebrow">night reader</span>
+          <h1 class="phone-title">Blog</h1>
+        </div>
+        <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+          J
+        </button>
+      </header>
+
+      <section class="ios-content">
+        <article class="reader glass" data-reader="ios-reader">
+          <div class="reader-meta">
+            <span class="chip hot" data-reader-meta>Design note · 7 min</span>
+          </div>
+          <h2 data-reader-title>把个人主页做成一座可以逛的房子</h2>
+          <p data-reader-body>
+            移动端博客不应该只是压缩后的长文列表。它可以像阅读卡片一样打开，先给标题和观点，再让用户决定是否继续读。
+          </p>
+        </article>
+
+        <div class="blog-list" data-blog-list="ios-reader">
+          <button
+            class="blog-card is-active"
+            type="button"
+            data-blog
+            data-title="把个人主页做成一座可以逛的房子"
+            data-meta="Design note · 7 min"
+            data-body="移动端博客不应该只是压缩后的长文列表。它可以像阅读卡片一样打开，先给标题和观点，再让用户决定是否继续读。"
+          >
+            <span class="chip hot">design</span>
+            <h3>可以逛的个人主页</h3>
+            <p>从作品集到个人空间。</p>
+          </button>
+          <button
+            class="blog-card"
+            type="button"
+            data-blog
+            data-title="黑色玻璃界面的高级感来自层次"
+            data-meta="UI diary · 5 min"
+            data-body="不是纯黑，不是满屏光效，而是深色层次、边界、透光和足够克制的互动状态。"
+          >
+            <span class="chip">UI</span>
+            <h3>黑色玻璃界面的层次</h3>
+            <p>如何避免廉价科技感。</p>
+          </button>
+        </div>
+      </section>
+
+      <nav class="phone-nav" aria-label="iOS navigation">
+        <a href="ios-home.html">动态</a>
+        <a href="ios-likes.html">Likes</a>
+        <a aria-current="page" href="ios-blog.html">博客</a>
+        <a href="ios-ask.html">提问</a>
+      </nav>
+    </main>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

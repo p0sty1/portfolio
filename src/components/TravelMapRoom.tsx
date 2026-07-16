@@ -91,8 +91,13 @@ const MARKER_COLORS = {
 
 const CITY_POINT_ALTITUDE = 0.018;
 const GLOBE_MOUNT_DELAY_MS = {
-  desktop: 80,
-  mobile: 2400,
+  desktop: 0,
+  mobile: 650,
+};
+
+const GLOBE_MOUNT_TIMEOUT_MS = {
+  desktop: 600,
+  mobile: 2000,
 };
 
 const DESKTOP_RENDERER_CONFIG = {
@@ -206,6 +211,78 @@ const GlobeLayer = styled.div`
   z-index: 0;
 `;
 
+const MobileGlobePreview = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: radial-gradient(
+    circle at 50% 42%,
+    rgba(71, 205, 255, 0.16),
+    rgba(3, 5, 10, 0.28) 42%,
+    rgba(3, 5, 10, 0.72) 100%
+  );
+
+  &::before {
+    width: min(17rem, 72vw);
+    aspect-ratio: 1;
+    border: 1px solid rgba(154, 232, 255, 0.38);
+    border-radius: 50%;
+    background:
+      radial-gradient(
+        circle at 34% 28%,
+        rgba(255, 255, 255, 0.26),
+        transparent 28%
+      ),
+      linear-gradient(105deg, transparent 54%, rgba(2, 5, 12, 0.62) 82%),
+      url(${EARTH_TEXTURE}) center / cover no-repeat;
+    box-shadow:
+      inset -2.2rem -1rem 3.6rem rgba(0, 0, 0, 0.52),
+      0 1.4rem 4rem rgba(0, 0, 0, 0.32),
+      0 0 2.8rem rgba(84, 215, 255, 0.12);
+    content: '';
+  }
+`;
+
+const MobileGlobePreviewContent = styled.div`
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background: rgba(5, 10, 18, 0.72);
+  color: rgba(248, 253, 255, 0.78);
+  font-size: 0.76rem;
+  font-weight: 680;
+  backdrop-filter: blur(14px);
+`;
+
+const MobileGlobePreviewButton = styled.button`
+  min-height: 2.35rem;
+  flex: 0 0 auto;
+  padding: 0.5rem 0.78rem;
+  border: 1px solid rgba(255, 232, 128, 0.52);
+  border-radius: 999px;
+  background: rgba(255, 232, 128, 0.14);
+  color: #fff1b0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 780;
+
+  &:focus-visible {
+    outline: 2px solid rgba(255, 232, 128, 0.95);
+    outline-offset: 2px;
+  }
+`;
+
 const GlobeLoadingOverlay = styled.div<{ $visible: boolean }>`
   position: absolute;
   inset: 0;
@@ -251,6 +328,10 @@ const GlobeLoadingCopy = styled.p`
   font-weight: 640;
   letter-spacing: 0;
   animation: ${statusPulse} 1.35s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
 const GlobeLoadingBar = styled.div`
@@ -277,6 +358,13 @@ const GlobeLoadingBar = styled.div`
     content: '';
     transform-origin: left center;
     animation: ${progressSweep} 1.55s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      width: 55%;
+      animation: none;
+    }
   }
 `;
 
@@ -314,10 +402,20 @@ const ControlButton = styled.button`
     border-color 0.16s ease,
     transform 0.16s ease;
 
-  &:hover {
+  &:hover:not(:disabled) {
     transform: translateY(-1px);
     border-color: rgba(255, 255, 255, 0.42);
     background: rgba(20, 28, 44, 0.78);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.42;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(255, 232, 128, 0.95);
+    outline-offset: 2px;
   }
 `;
 
@@ -393,9 +491,14 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
   const [canMountGlobe, setCanMountGlobe] = useState(false);
   const [globeReady, setGlobeReady] = useState(false);
   const [globeSize, setGlobeSize] = useState<GlobeSize>(DEFAULT_GLOBE_SIZE);
+  const [interactiveRequested, setInteractiveRequested] = useState(!isMobile);
   const [mapReady, setMapReady] = useState(false);
   const [mapRenderPhase, setMapRenderPhase] = useState<MapRenderPhase>('base');
   const [selectedCity, setSelectedCity] = useState<null | TravelCity>(null);
+
+  useEffect(() => {
+    setInteractiveRequested(!isMobile);
+  }, [isMobile]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -453,17 +556,22 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
     setMapRenderPhase('base');
     setSelectedCity(null);
 
-    const timer = window.setTimeout(
+    if (isMobile && !interactiveRequested) return undefined;
+
+    return scheduleIdleTask(
       () => {
         setCanMountGlobe(true);
       },
-      isMobile ? GLOBE_MOUNT_DELAY_MS.mobile : GLOBE_MOUNT_DELAY_MS.desktop,
+      {
+        delay: isMobile
+          ? GLOBE_MOUNT_DELAY_MS.mobile
+          : GLOBE_MOUNT_DELAY_MS.desktop,
+        timeout: isMobile
+          ? GLOBE_MOUNT_TIMEOUT_MS.mobile
+          : GLOBE_MOUNT_TIMEOUT_MS.desktop,
+      },
     );
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [isMobile]);
+  }, [interactiveRequested, isMobile]);
 
   useEffect(() => {
     if (!canMountGlobe || !globeReady) return undefined;
@@ -565,7 +673,9 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
     [isMobile, selectedCity?.id],
   );
 
-  const shouldShowGlobeLoading = !mapReady || !canMountGlobe;
+  const showMobilePreview = isMobile && !interactiveRequested;
+  const shouldShowGlobeLoading =
+    !showMobilePreview && (!mapReady || !canMountGlobe);
   const polygonRegionFeatures =
     mapRenderPhase === 'hex' || mapRenderPhase === 'polygons'
       ? travelRegionFeatures
@@ -631,6 +741,21 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
             </Suspense>
           ) : null}
         </GlobeLayer>
+        {showMobilePreview ? (
+          <MobileGlobePreview data-v2="mobile-globe-preview">
+            <MobileGlobePreviewContent>
+              <span>轻量预览，不影响页面滚动</span>
+              <MobileGlobePreviewButton
+                type="button"
+                onClick={() => {
+                  setInteractiveRequested(true);
+                }}
+              >
+                开启互动地球
+              </MobileGlobePreviewButton>
+            </MobileGlobePreviewContent>
+          </MobileGlobePreview>
+        ) : null}
         <GlobeLoadingOverlay
           $visible={shouldShowGlobeLoading}
           aria-hidden={!shouldShowGlobeLoading}
@@ -646,33 +771,38 @@ export const TravelMapRoom = ({ children }: { children?: ReactNode }) => {
         {selectedCity ? (
           <SelectedCityPanel>{getCityLabel(selectedCity)}</SelectedCityPanel>
         ) : null}
-        <ControlDock aria-label="Globe controls">
-          <ControlButton
-            type="button"
-            aria-label="Zoom in"
-            onClick={() => {
-              zoomBy(-0.42);
-            }}
-          >
-            +
-          </ControlButton>
-          <ControlButton
-            type="button"
-            aria-label="Zoom out"
-            onClick={() => {
-              zoomBy(0.42);
-            }}
-          >
-            -
-          </ControlButton>
-          <ControlButton
-            type="button"
-            aria-label="Reset globe"
-            onClick={resetGlobe}
-          >
-            1x
-          </ControlButton>
-        </ControlDock>
+        {showMobilePreview ? null : (
+          <ControlDock aria-label="Globe controls">
+            <ControlButton
+              type="button"
+              aria-label="Zoom in"
+              disabled={!globeReady}
+              onClick={() => {
+                zoomBy(-0.42);
+              }}
+            >
+              +
+            </ControlButton>
+            <ControlButton
+              type="button"
+              aria-label="Zoom out"
+              disabled={!globeReady}
+              onClick={() => {
+                zoomBy(0.42);
+              }}
+            >
+              -
+            </ControlButton>
+            <ControlButton
+              type="button"
+              aria-label="Reset globe"
+              disabled={!globeReady}
+              onClick={resetGlobe}
+            >
+              1x
+            </ControlButton>
+          </ControlDock>
+        )}
       </GlobeStage>
       {children}
     </Page>

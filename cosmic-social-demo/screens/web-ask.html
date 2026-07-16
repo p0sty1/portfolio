@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jyangbly Space · Ask</title>
+    <link rel="stylesheet" href="../css/demo.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="app-shell">
+      <aside class="sidebar glass" aria-label="个人空间导航">
+        <div class="identity">
+          <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+            J
+          </button>
+          <h1>Jyangbly Space</h1>
+          <p>匿名提问是访客和你发生互动的轻入口。</p>
+        </div>
+        <nav class="nav">
+          <a class="nav-link" href="web-home.html">动态 <span>01</span></a>
+          <a class="nav-link" href="web-likes.html">Likes <span>02</span></a>
+          <a class="nav-link" href="web-blog.html">博客 <span>03</span></a>
+          <a class="nav-link" aria-current="page" href="web-ask.html"
+            >提问 <span>04</span></a
+          >
+        </nav>
+      </aside>
+
+      <header class="top-mobile glass">
+        <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+          J
+        </button>
+        <nav class="mobile-nav-inline" aria-label="移动导航">
+          <a href="web-home.html">动态</a>
+          <a href="web-likes.html">Likes</a>
+          <a href="web-blog.html">博客</a>
+          <a aria-current="page" href="web-ask.html">提问</a>
+        </nav>
+      </header>
+
+      <main class="main">
+        <section class="hero-card glass">
+          <div class="hero-content">
+            <span class="eyebrow"
+              ><span class="live-dot"></span> anonymous inbox</span
+            >
+            <h1 class="hero-title">向这个空间投递一条匿名信号。</h1>
+            <p class="hero-copy">
+              这个 demo
+              里表单会真实校验并把问题加入本页列表，但不会提交到数据库。
+            </p>
+          </div>
+          <div class="hero-side">
+            <div class="holo-stat">
+              <span class="metric-label">open questions</span
+              ><span class="metric-value">9</span>
+            </div>
+            <div class="holo-stat">
+              <span class="metric-label">reply rate</span
+              ><span class="metric-value">82%</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="ask-layout">
+          <article class="panel glass">
+            <div class="section-head">
+              <div>
+                <h2>匿名提问</h2>
+                <p>保留社交产品里的“轻输入”感，而不是普通联系表单。</p>
+              </div>
+            </div>
+            <form class="ask-form" data-ask-form="web-ask">
+              <input
+                class="ask-input"
+                name="name"
+                autocomplete="name"
+                placeholder="署名，可留空"
+              />
+              <textarea
+                class="ask-textarea"
+                name="question"
+                placeholder="想问 Boyu 什么？至少写 6 个字。"
+              ></textarea>
+              <div class="ask-actions">
+                <button class="ask-submit" type="submit">投递信号</button>
+                <span class="chip">本地 demo 状态</span>
+              </div>
+            </form>
+          </article>
+
+          <section
+            class="question-list"
+            data-question-list="web-ask"
+            aria-live="polite"
+          >
+            <article class="question-card">
+              <span class="chip hot">精选问题</span>
+              <h3>你觉得个人主页最重要的是表达能力还是功能完整度？</h3>
+              <p>
+                回答方向：先让访客感受到“这是一个真实的人”，再让功能成为可互动的入口。
+              </p>
+            </article>
+            <article class="question-card">
+              <span class="chip">匿名</span>
+              <h3>如果只保留一个模块，你会留下哪个？</h3>
+              <p>动态流，因为它能持续更新，也最像个人空间的心跳。</p>
+            </article>
+          </section>
+        </section>
+      </main>
+
+      <aside class="right-rail">
+        <section class="signal-game glass" data-signal-game>
+          <h2>投递彩蛋</h2>
+          <p>提交问题前可以先收集三个信号碎片。</p>
+          <div class="signal-buttons">
+            <button class="signal-button" type="button" data-signal="Q">
+              Q
+            </button>
+            <button class="signal-button" type="button" data-signal="A">
+              A
+            </button>
+            <button class="signal-button" type="button" data-signal="?">
+              ?
+            </button>
+          </div>
+          <div class="signal-status" data-signal-status>
+            等待收集 0/3 个信号碎片
+          </div>
+        </section>
+      </aside>
+    </div>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

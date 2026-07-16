@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "Jyangbly Cosmic Social Demo",
+  "entry": "jyangbly-cosmic-social-demo.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-06-15T10:32:47.569Z",
+  "updatedAt": "2026-06-15T10:32:47.582Z",
+  "metadata": {
+    "identifier": "jyangbly-cosmic-social-demo",
+    "artifactType": "text/html",
+    "inferred": false
+  }
+}

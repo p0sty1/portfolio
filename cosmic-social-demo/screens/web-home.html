@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jyangbly Space · Home</title>
+    <link rel="stylesheet" href="../css/demo.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="app-shell">
+      <aside class="sidebar glass" aria-label="个人空间导航">
+        <div class="identity">
+          <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+            J
+          </button>
+          <h1>Jyangbly Space</h1>
+          <p>
+            一个社交化的个人主页：动态、收藏、博客、匿名提问都在同一条轨道上。
+          </p>
+        </div>
+        <nav class="nav">
+          <a class="nav-link" aria-current="page" href="web-home.html"
+            >动态 <span>01</span></a
+          >
+          <a class="nav-link" href="web-likes.html">Likes <span>02</span></a>
+          <a class="nav-link" href="web-blog.html">博客 <span>03</span></a>
+          <a class="nav-link" href="web-ask.html">提问 <span>04</span></a>
+        </nav>
+      </aside>
+
+      <header class="top-mobile glass">
+        <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+          J
+        </button>
+        <nav class="mobile-nav-inline" aria-label="移动导航">
+          <a aria-current="page" href="web-home.html">动态</a>
+          <a href="web-likes.html">Likes</a>
+          <a href="web-blog.html">博客</a>
+          <a href="web-ask.html">提问</a>
+        </nav>
+      </header>
+
+      <main class="main">
+        <section class="hero-card glass">
+          <div class="hero-content">
+            <span class="eyebrow"
+              ><span class="live-dot"></span> live personal OS</span
+            >
+            <h1 class="hero-title">欢迎进入 Boyu 的黑色玻璃个人宇宙。</h1>
+            <p class="hero-copy">
+              这里不是普通作品集，而是一个带社交动态、收藏展柜、博客阅读和匿名提问的个人空间。每个模块都像一颗可互动的信号节点。
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="#feed">查看动态流</a>
+              <a class="button" href="web-ask.html">匿名提问</a>
+            </div>
+          </div>
+          <div class="hero-side" aria-label="空间状态">
+            <div class="holo-stat">
+              <span class="metric-label">today signal</span>
+              <span class="metric-value">42</span>
+            </div>
+            <div class="holo-stat">
+              <span class="metric-label">active rooms</span>
+              <span class="metric-value">4</span>
+            </div>
+            <div class="holo-stat">
+              <span class="metric-label">mood</span>
+              <span class="metric-value">noir</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="feed" class="panel glass" data-filter-scope>
+          <div class="section-head">
+            <div>
+              <h2>动态流</h2>
+              <p>图文、短句、旅行碎片和正在做的 UI 实验。</p>
+            </div>
+            <div class="filter-row" aria-label="动态筛选">
+              <button
+                class="tab-button is-active"
+                type="button"
+                data-filter="all"
+              >
+                全部
+              </button>
+              <button class="tab-button" type="button" data-filter="photo">
+                图文
+              </button>
+              <button class="tab-button" type="button" data-filter="thought">
+                想法
+              </button>
+            </div>
+          </div>
+
+          <div class="feed-list">
+            <article class="post featured" data-category="photo">
+              <div class="post-top">
+                <span class="chip hot">featured</span>
+                <span>2 min ago</span>
+              </div>
+              <h3>把个人主页做成一个可以逛的社交空间。</h3>
+              <p>
+                今天想试一版更像互联网产品发布页的视觉：黑色底、玻璃层、发光轨道，但内容依然是“我”的日常。
+              </p>
+              <div class="post-actions">
+                <button
+                  class="like-button"
+                  type="button"
+                  data-like
+                  aria-pressed="false"
+                >
+                  喜欢 <span data-like-count>18</span>
+                </button>
+                <span class="chip">评论 6</span>
+                <span class="chip">浏览 128</span>
+              </div>
+            </article>
+
+            <article class="post" data-category="thought">
+              <div class="post-top">
+                <span class="chip">note</span>
+                <span>yesterday</span>
+              </div>
+              <h3>
+                好的个人主页不只是“介绍我”，还应该让别人能和我发生一点互动。
+              </h3>
+              <p>
+                留言、匿名提问、收藏和博客都应该是入口，而不是藏在底部的附属品。
+              </p>
+              <div class="post-actions">
+                <button
+                  class="like-button"
+                  type="button"
+                  data-like
+                  aria-pressed="false"
+                >
+                  喜欢 <span data-like-count>31</span>
+                </button>
+                <span class="chip">评论 3</span>
+              </div>
+            </article>
+
+            <article class="post" data-category="photo">
+              <div class="post-top">
+                <span class="chip">gallery sync</span>
+                <span>Jun 12</span>
+              </div>
+              <h3>旅行地图可以像宇宙星图一样展开。</h3>
+              <p>
+                城市、照片、心情和音乐可以串成路径，让“去过哪里”变成更有记忆点的浏览体验。
+              </p>
+              <div class="post-actions">
+                <button
+                  class="like-button"
+                  type="button"
+                  data-like
+                  aria-pressed="false"
+                >
+                  喜欢 <span data-like-count>24</span>
+                </button>
+                <span class="chip">浏览 205</span>
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <aside class="right-rail">
+        <section class="signal-game glass" data-signal-game>
+          <h2>Signal easter egg</h2>
+          <p>收集三个信号碎片，解锁隐藏的 Jyangbly Signal Mode。</p>
+          <div class="signal-buttons">
+            <button class="signal-button" type="button" data-signal="A">
+              A
+            </button>
+            <button class="signal-button" type="button" data-signal="B">
+              B
+            </button>
+            <button class="signal-button" type="button" data-signal="C">
+              C
+            </button>
+          </div>
+          <div class="signal-status" data-signal-status>
+            等待收集 0/3 个信号碎片
+          </div>
+        </section>
+        <section class="rail-card glass">
+          <h2>今天的空间温度</h2>
+          <p>动态更像主时间线，Likes 像策展展柜，博客像夜间阅读室。</p>
+          <div class="orbit-meter" aria-hidden="true"></div>
+        </section>
+      </aside>
+    </div>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

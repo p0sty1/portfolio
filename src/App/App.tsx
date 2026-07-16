@@ -7,8 +7,6 @@ import { HomeScreen } from 'components/HomeScreen';
 import { MobileHeader } from 'components/MobileHeader';
 import { MobileNav } from 'components/MobileNav';
 import { Sidebar } from 'components/Sidebar';
-import { preloadTravelGlobe } from 'components/travelGlobeLoader';
-import { scheduleIdleTask } from 'lib/scheduleIdleTask';
 
 import './App.scss';
 import { AppContext, AppProvider } from './AppContext';
@@ -57,7 +55,19 @@ const ProfileRoom = lazy(() =>
 
 const ViewLoading = () => (
   <div className="app-view-loading" role="status" aria-live="polite">
-    <span aria-hidden="true" />
+    <div className="app-view-loading-card" aria-hidden="true">
+      <div className="app-view-loading-heading" />
+      <div className="app-view-loading-row">
+        <div className="app-view-loading-avatar" />
+        <div className="app-view-loading-copy">
+          <div />
+          <div />
+        </div>
+      </div>
+      <div className="app-view-loading-media" />
+      <div className="app-view-loading-line" />
+    </div>
+    <span className="app-view-loading-label">页面加载中</span>
   </div>
 );
 
@@ -148,18 +158,6 @@ const AppViews = () => {
 export const App = () => {
   const [isAdminRoute, setIsAdminRoute] = useState(isAdminPath);
   const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(
-    () => {
-      if (process.env.NODE_ENV === 'test') return undefined;
-
-      return scheduleIdleTask(preloadTravelGlobe, {
-        delay: 900,
-        timeout: 1800,
-      });
-    },
-    [],
-  );
 
   useEffect(() => {
     const updateRoute = () => {

@@ -90,21 +90,120 @@ body {
   min-height: 0;
   display: grid;
   place-items: center;
+  padding: clamp(1rem, 4vw, 2rem);
   color: rgb(248 250 252 / 62%);
 }
 
-.app-view-loading span {
-  width: 1.45rem;
-  aspect-ratio: 1;
-  border: 2px solid currentcolor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: app-view-loading-spin 0.78s linear infinite;
+.app-view-loading-card {
+  display: grid;
+  width: min(40rem, 100%);
+  gap: 1rem;
+  padding: 1rem;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 16px;
+  background: rgb(15 23 42 / 42%);
+  box-shadow: 0 1.2rem 3.6rem rgb(0 0 0 / 16%);
 }
 
-@keyframes app-view-loading-spin {
+.app-view-loading-heading,
+.app-view-loading-avatar,
+.app-view-loading-copy div,
+.app-view-loading-media,
+.app-view-loading-line {
+  position: relative;
+  overflow: hidden;
+  background: rgb(248 250 252 / 11%);
+}
+
+.app-view-loading-heading {
+  width: 28%;
+  height: 1.35rem;
+  border-radius: 999px;
+}
+
+.app-view-loading-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.app-view-loading-avatar {
+  width: 2.8rem;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.app-view-loading-copy {
+  display: grid;
+  width: min(16rem, 62%);
+  gap: 0.45rem;
+}
+
+.app-view-loading-copy div {
+  height: 0.72rem;
+  border-radius: 999px;
+}
+
+.app-view-loading-copy div:last-child {
+  width: 64%;
+}
+
+.app-view-loading-media {
+  width: 100%;
+  aspect-ratio: 16 / 8;
+  border-radius: 14px;
+}
+
+.app-view-loading-line {
+  width: 54%;
+  height: 0.78rem;
+  border-radius: 999px;
+}
+
+.app-view-loading-heading::after,
+.app-view-loading-avatar::after,
+.app-view-loading-copy div::after,
+.app-view-loading-media::after,
+.app-view-loading-line::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 18%,
+    rgb(255 255 255 / 17%) 48%,
+    transparent 78%
+  );
+  content: '';
+  transform: translate3d(-100%, 0, 0);
+  animation: app-view-loading-shimmer 1.45s ease-in-out infinite;
+}
+
+.app-view-loading-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes app-view-loading-shimmer {
   to {
-    transform: rotate(360deg);
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-view-loading-heading::after,
+  .app-view-loading-avatar::after,
+  .app-view-loading-copy div::after,
+  .app-view-loading-media::after,
+  .app-view-loading-line::after {
+    animation: none;
   }
 }
 

@@ -1,0 +1,83 @@
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jyangbly Cosmic Social Demo</title>
+    <link rel="stylesheet" href="css/demo.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <main class="launcher">
+      <section class="launcher-hero">
+        <div class="launcher-copy glass">
+          <span class="launcher-badge"><span class="live-dot"></span> concept demo / not wired to homepage</span>
+          <h1>Jyangbly as a black-glass social universe.</h1>
+          <p class="launcher-lede">
+            一个更互联网、更高端、更炫技的个人空间概念：动态流、Likes 陈列、博客阅读和匿名提问都变成可点击的产品界面，外加一个轻量信号彩蛋。
+          </p>
+          <div class="launcher-actions">
+            <a class="button primary" href="screens/web-home.html">打开 Web Home</a>
+            <a class="button" href="screens/ios-home.html">打开 iOS Home</a>
+            <a class="button" href="screens/web-likes.html">看 Likes 陈列</a>
+          </div>
+        </div>
+
+        <aside class="launcher-preview glass" aria-label="概念系统预览">
+          <div class="preview-grid">
+            <div class="preview-card">
+              <strong>黑色底 + 玻璃磨砂</strong>
+              <span>深色网格、噪声、半透明面板和青绿/洋红信号色，避免普通灰黑后台感。</span>
+            </div>
+            <div class="preview-card">
+              <strong>产品化个人主页</strong>
+              <span>不是简历页，而是一个可以发动态、读博客、展示收藏、收匿名问题的个人空间。</span>
+            </div>
+          </div>
+          <div class="preview-orbit" aria-hidden="true">
+            <svg viewBox="0 0 420 280" preserveAspectRatio="none">
+              <path d="M80 84 C170 18 260 224 346 102" fill="none" stroke="rgba(107,255,229,.35)" stroke-width="1.5" />
+              <path d="M70 190 C180 84 260 62 358 210" fill="none" stroke="rgba(255,105,206,.28)" stroke-width="1.5" />
+            </svg>
+            <i></i><i></i><i></i>
+          </div>
+        </aside>
+      </section>
+
+      <section class="device-gallery" aria-label="设备预览">
+        <article class="frame-card glass">
+          <h2>Responsive web preview</h2>
+          <iframe
+            class="browser-frame"
+            src="/frames/browser-chrome.html?screen=cosmic-social-demo/screens/web-home.html"
+            title="Web home framed preview"
+            loading="lazy"
+          ></iframe>
+          <div class="direct-links" aria-label="Web 页面直达">
+            <a href="screens/web-home.html">Home</a>
+            <a href="screens/web-likes.html">Likes</a>
+            <a href="screens/web-blog.html">Blog</a>
+            <a href="screens/web-ask.html">Ask</a>
+          </div>
+        </article>
+
+        <article class="frame-card glass">
+          <h2>iOS app preview</h2>
+          <iframe
+            class="phone-frame"
+            src="/frames/iphone-15-pro.html?screen=cosmic-social-demo/screens/ios-home.html"
+            title="iOS home framed preview"
+            loading="lazy"
+          ></iframe>
+          <div class="direct-links" aria-label="iOS 页面直达">
+            <a href="screens/ios-home.html">Home</a>
+            <a href="screens/ios-likes.html">Likes</a>
+            <a href="screens/ios-blog.html">Blog</a>
+            <a href="screens/ios-ask.html">Ask</a>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

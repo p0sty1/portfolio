@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jyangbly iOS · Ask</title>
+    <link rel="stylesheet" href="../css/demo.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <main class="ios-stage">
+      <header class="ios-top">
+        <div>
+          <span class="eyebrow">anonymous inbox</span>
+          <h1 class="phone-title">Ask</h1>
+        </div>
+        <button class="brand-orb" type="button" aria-label="Jyangbly signal">
+          J
+        </button>
+      </header>
+
+      <section class="ios-content">
+        <article class="phone-panel phone-hero">
+          <span class="chip hot">匿名信号</span>
+          <h1>投递一个问题，不需要暴露身份。</h1>
+          <p>移动端把提问做成消息投递，而不是普通表单。</p>
+        </article>
+
+        <article class="phone-panel">
+          <form class="ask-form" data-ask-form="ios-ask">
+            <input
+              class="ask-input"
+              name="name"
+              autocomplete="name"
+              placeholder="署名，可留空"
+            />
+            <textarea
+              class="ask-textarea"
+              name="question"
+              placeholder="想问 Boyu 什么？至少写 6 个字。"
+            ></textarea>
+            <button class="ask-submit" type="submit">投递信号</button>
+          </form>
+        </article>
+
+        <section
+          class="question-list"
+          data-question-list="ios-ask"
+          aria-live="polite"
+        >
+          <article class="question-card">
+            <span class="chip hot">精选问题</span>
+            <h3>如果主页只能保留一个互动入口，你会留下哪个？</h3>
+            <p>会留下动态流，因为它持续更新，也最像空间的心跳。</p>
+          </article>
+        </section>
+      </section>
+
+      <nav class="phone-nav" aria-label="iOS navigation">
+        <a href="ios-home.html">动态</a>
+        <a href="ios-likes.html">Likes</a>
+        <a href="ios-blog.html">博客</a>
+        <a aria-current="page" href="ios-ask.html">提问</a>
+      </nav>
+    </main>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

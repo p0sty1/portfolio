@@ -15,6 +15,7 @@ import { config } from 'App/config';
 import { themes } from 'appearance';
 import { Footer } from 'components';
 import { MobileNav } from 'components/MobileNav';
+import { TravelMapRoom } from 'components/TravelMapRoom';
 import { HomeNavIcon } from 'icons/nav';
 
 jest.mock('react-globe.gl', () => {
@@ -249,6 +250,28 @@ describe('application tests', () => {
 });
 
 describe('app context tests', () => {
+  it('should keep the interactive globe opt-in on mobile', async () => {
+    render(
+      <AppProvider config={mockState.config} isMobile={true}>
+        <TravelMapRoom />
+      </AppProvider>,
+    );
+
+    expect(screen.getByTestId('mobile-globe-preview')).toBeVisible();
+    expect(
+      screen.queryByTestId('mock-travel-globe-canvas'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '开启互动地球' }));
+
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('mock-travel-globe-canvas')).toBeVisible();
+      },
+      { timeout: 2500 },
+    );
+  });
+
   it('should switch mobile nav by tapping a captured tab', async () => {
     await act(() =>
       render(
